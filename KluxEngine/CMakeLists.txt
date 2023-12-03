@@ -12,6 +12,9 @@ set(SOURCES
 # core
     ./Source/Core/Logger.cpp
     ./Source/Core/Utils.cpp
+# impl
+    ./Source/Impl/KluxDevice.cpp
+    ./Source/Impl/KluxDeviceMemory.cpp
 )
 
 add_library(kluxengine SHARED ${SOURCES})

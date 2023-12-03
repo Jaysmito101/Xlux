@@ -11,6 +11,8 @@ endif()
 
 add_executable(sandbox
     ./Source/Main.cpp
+    ./Source/Win32_Window.cpp
+    ./Source/WindowFramebuffer.cpp
 )
 
 target_link_libraries(sandbox

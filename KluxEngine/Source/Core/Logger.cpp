@@ -114,8 +114,8 @@ namespace klux
 		case klux::LogLevel::Info:		return "INFO";
 		case klux::LogLevel::Warning:	return "WARNING";
 		case klux::LogLevel::Error:		return "ERROR";
-		case klux::LogLevel::Fatal:		return "FATAL";
-		case klux::LogLevel::All:		return "ALL";
+		case klux::LogLevel::Fatal:		return "FATA";
+		case klux::LogLevel::All:		return "AL";
 		case klux::LogLevel::None:		return "NONE";
 		default:						return "UNKNOWN";	
 		}

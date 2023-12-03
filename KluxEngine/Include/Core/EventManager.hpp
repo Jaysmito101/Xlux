@@ -12,15 +12,7 @@
 namespace klux
 {
 
-	enum EventType
-	{
-		None = 0,
-		WindowClose, WindowSize, WindowPos, WindowCursorPos, WindowMouseButton,
-		WindowKey, WindowChar, WindowScroll, WindowFocus, WindowFramebufferSize
-	};
-
-
-	template<EventType Type, typename... ParamsData>
+	template<U32 Type, typename... ParamsData>
 	class EventManager
 	{
 	public:
@@ -65,6 +57,6 @@ namespace klux
 	};
 
 
-	template<EventType Type, typename... ParamsData>
+	template<U32 Type, typename... ParamsData>
 	Scope<EventManager<Type, ParamsData...>> EventManager<Type, ParamsData...>::s_Instance = nullptr;
 }

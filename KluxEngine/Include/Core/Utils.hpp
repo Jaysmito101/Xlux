@@ -9,5 +9,7 @@ namespace klux
 		KLUX_API String GetExecutableDirectory();
 
 		KLUX_API List<U8> ReadBinaryFie(const String& filepath);
+
+		KLUX_API F32 GetTime();
 	}
 }
