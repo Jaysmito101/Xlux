@@ -20,6 +20,12 @@ namespace klux
 
 	Device::~Device()
 	{
+		// destroy all pipelines
+		for (I32 i = (I32)m_PipelineList.size() - 1; i >= 0; --i)
+		{
+			DestroyPipeline(m_PipelineList[i]);
+		}
+
 		// free all memory
 		for (I32 i = (I32)m_AllocatedMemoryList.size() - 1; i >= 0; --i)
 		{
@@ -44,5 +50,20 @@ namespace klux
 		delete memory;
 	}
 
-
+	RawPtr<Pipeline> Device::CreatePipeline(const PipelineCreateInfo& createInfo)
+	{
+		auto pipeline = new Pipeline(createInfo);
+		m_PipelineList.push_back(pipeline);
+		return pipeline;
+	}
+	
+	void Device::DestroyPipeline(RawPtr<Pipeline> pipeline)
+	{
+		auto it = std::find(m_PipelineList.begin(), m_PipelineList.end(), pipeline);
+		if (it != m_PipelineList.end())
+		{
+			m_PipelineList.erase(it);
+		}
+		delete pipeline;
+	}
 }

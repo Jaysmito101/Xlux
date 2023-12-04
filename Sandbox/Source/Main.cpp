@@ -1,6 +1,60 @@
 #include "Klux.hpp"
 #include "Window.hpp"
 
+
+struct VertexInData
+{
+    klux::math::Vec3 position;
+
+    VertexInData(klux::math::Vec3 pos) 
+    {
+        position = pos;
+    }
+
+    VertexInData(const VertexInData& other) 
+	{
+		position = other.position;
+	}
+};
+
+struct VertexOutData
+{
+    klux::math::Vec3 position = klux::math::Vec3(0.0f, 0.0f, 0.0f);
+
+    inline VertexOutData Scaled(klux::F32 scale) const
+	{
+		return VertexOutData{position * scale};
+	}
+
+    inline VertexOutData Add (const VertexOutData& other) const
+    {
+        return VertexOutData{position + other.position};
+	}
+};
+
+class HelloWorldVShader : public klux::IShaderG<VertexInData, VertexOutData>
+{
+public:
+    klux::Bool Execute(const klux::RawPtr<VertexInData> dataIn, klux::RawPtr<VertexOutData> dataOut, klux::RawPtr<klux::ShaderBuiltIn> builtIn) 
+    {
+        dataOut->position = dataIn->position;
+        builtIn->Position = klux::math::Vec4(dataIn->position);
+		return true;
+    }
+};
+
+class HelloWorldFShader : public klux::IShaderG<VertexOutData, klux::FragShaderOutput>
+{
+public:
+	klux::Bool Execute(const klux::RawPtr<VertexOutData> dataIn, klux::RawPtr<klux::FragShaderOutput> dataOut, klux::RawPtr<klux::ShaderBuiltIn> builtIn) 
+	{
+        (void) dataIn;
+        (void) builtIn;
+		dataOut->Color = klux::math::Vec4(1.0f, 0.0f, 0.0f, 1.0f);
+		return true;
+	}
+};
+
 int main()
 {
     klux::Logger::Init();
@@ -13,9 +67,31 @@ int main()
 
     auto framebuffer = Window::GetFramebuffer();
 
-    auto memory = device->AllocateMemory(framebuffer->GetWidth() * framebuffer->GetHeight() * 4);
+    auto vertexShader = klux::CreateRawPtr<HelloWorldVShader>();
+    auto fragmentShader = klux::CreateRawPtr<HelloWorldFShader>();
+    auto interpolator = klux::CreateRawPtr<klux::BasicInterpolator<VertexOutData>>();
 
-    device->FreeMemory(memory);
+    auto createInfo = klux::PipelineCreateInfo()
+        .SetShader(vertexShader, klux::ShaderStage_Vertex)
+        .SetShader(vertexShader, klux::ShaderStage_Fragment)
+        .SetInterpolator(interpolator)
+        .SetVertexItemSize(0);
+
+    auto pipeline = device->CreatePipeline(createInfo);
+
+    const auto vertices = std::vector<VertexInData>{
+        VertexInData ( klux::math::Vec3(-0.5f, -0.5f, 0.0f)),
+        VertexInData ( klux::math::Vec3( 0.5f, -0.5f, 0.0f)),
+        VertexInData ( klux::math::Vec3( 0.0f,  0.5f, 0.0f))    
+	};
+
+    const auto indices = std::vector<klux::U32>{
+        0, 1, 2
+    };
+
+    // TODO: Create Vertex Buffer
+    // TODO: Create Index Buffer
+
 
     auto prevTime = klux::utils::GetTime(), currTime = klux::utils::GetTime(), deltaTime = 0.0f;
 
@@ -49,6 +125,12 @@ int main()
 		Window::SwapBuffer();
 		Window::Update();
     }
+
+    device->DestroyPipeline(pipeline);
+
+    delete vertexShader;
+    delete fragmentShader;
+    delete interpolator;
 
     klux::Device::Destroy(device);
 

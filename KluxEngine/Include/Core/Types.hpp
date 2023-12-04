@@ -22,6 +22,16 @@
 #endif
 
 
+#define KLUX_SAFE_DELETE(x) if(x) { delete x; x = nullptr; 
+
+#ifdef _MSC_VER
+	#define KLUX_FORCE_INLINE __forceinline
+#else
+	#define KLUX_FORCE_INLINE __attribute__((always_inline))
+#endif
+
+#define EPSILON 0.000001f
+
 namespace klux 
 {
 
@@ -41,6 +51,8 @@ namespace klux
 
 	using F32 = float;
 	using F64 = double;
+
+	using ValueType = F32;
 
 	using String = std::string;
 	using WString = std::wstring;

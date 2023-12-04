@@ -65,6 +65,7 @@
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
+#include <stdexcept>
 #include <limits>
 
 // core includes
