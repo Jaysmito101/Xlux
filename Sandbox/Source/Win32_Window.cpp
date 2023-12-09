@@ -221,6 +221,11 @@ void Window::SetPixel(klux::F32 x, klux::F32 y, klux::F32 r, klux::F32 g, klux::
 	s_BackBuffer->data[index] = RGBA(pvr, pvg, pvb, pva);
 }
 
+void Window::SetTitle(const klux::String& title)
+{
+	SetWindowText(s_WindowHandle, title.c_str());
+}
+
 Window::~Window()
 {
 	delete m_Framebuffer;

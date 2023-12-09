@@ -15,7 +15,9 @@ set(SOURCES
 # impl
     ./Source/Impl/KluxDevice.cpp
     ./Source/Impl/KluxDeviceMemory.cpp
+    ./Source/Impl/KluxBuffer.cpp
     ./Source/Impl/KluxPipeline.cpp
+    ./Source/Impl/KluxRenderer.cpp
 )
 
 add_library(kluxengine SHARED ${SOURCES})

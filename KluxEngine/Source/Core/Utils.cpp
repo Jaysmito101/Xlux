@@ -78,5 +78,28 @@ namespace klux
 			#endif
 		}
 
+		KLUX_API Bool IsPointInTriangle(const math::Vec2& p, const math::Vec2& a, const math::Vec2& b, const math::Vec2& c)
+		{
+			// Compute vectors        
+			math::Vec2 v0 = c - a;
+			math::Vec2 v1 = b - a;
+			math::Vec2 v2 = p - a;
+
+			// Compute dot products
+			F32 dot00 = v0.Dot(v0);
+			F32 dot01 = v0.Dot(v1);
+			F32 dot02 = v0.Dot(v2);
+			F32 dot11 = v1.Dot(v1);
+			F32 dot12 = v1.Dot(v2);
+
+			// Compute barycentric coordinates
+			F32 invDenom = 1.0f / (dot00 * dot11 - dot01 * dot01);
+			F32 u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+			F32 v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+
+			// Check if point is in triangle
+			return (u >= 0) && (v >= 0) && (u + v < 1);
+		}
+
 	}
 }

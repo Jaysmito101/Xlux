@@ -37,6 +37,7 @@
 // std includes
 #include <string>
 #include <vector>
+#include <queue>
 #include <map>
 #include <unordered_map>
 #include <memory>
@@ -73,3 +74,4 @@
 #include "core/Logger.hpp"
 #include "core/Utils.hpp"
 #include "core/EventManager.hpp"
+#include "core/LinearAllocator.hpp"

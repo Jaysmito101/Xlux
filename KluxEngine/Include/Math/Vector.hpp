@@ -1,8 +1,7 @@
 #pragma once
 
-#include "Core/Core.hpp"
-
-#include <immintrin.h>
+#include "Core/Types.hpp"
+#include "Core/Logger.hpp"
 
 
 namespace klux

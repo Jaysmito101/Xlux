@@ -81,7 +81,10 @@ namespace klux
 
 	void Logger::Log(LogLevel level, const String& message)
 	{
+
 		if (!static_cast<Bool>(level & m_LogLevelFilter)) return;
+
+		std::lock_guard<std::mutex> lock(m_Mutex);
 
 		auto t = std::time(nullptr);
 		auto tm = *std::localtime(&t);

@@ -19,6 +19,7 @@ public:
 	static void SwapBuffer();
 	static void Clear(klux::F32 r, klux::F32 g, klux::F32 b, klux::F32 a);
 	static void SetPixel(klux::F32 x, klux::F32 y, klux::F32 r, klux::F32 g, klux::F32 b, klux::F32 a);
+	static void SetTitle(const klux::String& title);
 
 	inline static klux::I32 GetWidth() { return s_Instance->m_Width; }
 	inline static klux::I32 GetHeight(){ return s_Instance->m_Height; }
@@ -44,6 +45,8 @@ public:
 	WindowFramebuffer() = default;
 	~WindowFramebuffer() = default;
 
+	virtual klux::U32 GetColorAttachmentCount() const override { return 1; }
+	virtual klux::Bool HasDepthAttachment() const override { return false; }
 	virtual klux::Pair<klux::U32, klux::U32> GetSize() const override;
 	virtual void SetColorPixel(klux::I32 channel, klux::I32 x, klux::I32 y, klux::F32 r, klux::F32 g, klux::F32 b, klux::F32 a) override;
 	virtual void SetDepthPixel(klux::I32 x, klux::I32 y, klux::F32 depth) override;

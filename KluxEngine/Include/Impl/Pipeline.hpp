@@ -50,6 +50,7 @@ namespace klux
 	struct KLUX_API PipelineCreateInfo
 	{
 		Size vertexItemSize = 0;
+		Size vertexToFragmentDataSize = 0;
 
 		RawPtr<IShader> vertexShader = nullptr;
 		RawPtr<IShader> fragmentShader = nullptr;
@@ -73,6 +74,12 @@ namespace klux
 		PipelineCreateInfo& SetVertexItemSize(Size size)
 		{
 			vertexItemSize = size;
+			return *this;
+		}
+
+		PipelineCreateInfo& SetVertexToFragmentDataSize(Size size)
+		{
+			vertexToFragmentDataSize = size;
 			return *this;
 		}
 
@@ -152,6 +159,9 @@ namespace klux
 			rasterizerDiscardEnable = enable;
 			return *this;
 		}
+
+
+
 	};
 
 	class KLUX_API Pipeline
@@ -165,6 +175,8 @@ namespace klux
 		Pipeline(const PipelineCreateInfo& createInfo);
 		~Pipeline();
 
+		friend class VertexShaderWorker;
+		friend class FragmentShaderWorker;
 	private:
 		PipelineCreateInfo m_CreateInfo;
 	};

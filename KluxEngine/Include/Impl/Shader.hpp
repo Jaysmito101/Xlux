@@ -13,6 +13,18 @@ namespace klux
 	{
 	public:
 		math::Vec4 Position;
+		U32 VertexIndex;
+
+		inline ShaderBuiltIn() = default;
+
+		inline ShaderBuiltIn& SetPosition(const math::Vec4& position) { Position = position; return *this; }
+		inline ShaderBuiltIn& SetVertexIndex(U32 vertexIndex) { VertexIndex = vertexIndex; return *this; }
+
+		inline void Reset()
+		{
+			Position = math::Vec4(0.0f, 0.0f, 0.0f, 1.0f);
+			VertexIndex = 0;
+		}
 	};
 
 	class FragShaderOutput

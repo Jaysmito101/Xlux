@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <queue>
 #include <map>
 #include <set>
 #include <unordered_map>
@@ -64,6 +65,9 @@ namespace klux
 
 	template<typename T>
 	using List = std::vector<T>;
+
+	template <typename T>
+	using Queue = std::queue<T>;
 
 	template<typename Key, typename Value>
 	using Map = std::map<Key, Value>;

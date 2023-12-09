@@ -73,6 +73,7 @@ namespace klux
 		List<std::pair<String, LogLevel>> m_AttachedFiles;
 		Bool m_EnableConsole = true;
 		LogLevel m_LogLevelFilter = LogLevel::All;
+		std::mutex m_Mutex;
 
 		static RawPtr<Logger> s_Instance;
 	};
@@ -123,6 +124,7 @@ namespace klux
 		inline void Error(const String& message, Args... args)
 		{
 			Logger::Get()->Log(LogLevel::Error, message, args...);
+			throw std::runtime_error(message);
 		}
 
 		template <typename... Args>
