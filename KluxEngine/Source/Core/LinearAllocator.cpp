@@ -37,7 +37,7 @@ namespace klux
 	void LinearAllocator::Reset()
 	{
 		std::lock_guard<std::mutex> lock(m_Mutex);
-
+		m_AllocationID++;
 		m_CurrentOffset = 0;
 	}
 

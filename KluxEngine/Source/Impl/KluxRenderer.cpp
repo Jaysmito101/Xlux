@@ -100,29 +100,23 @@ namespace klux
 				&((U8*)vertexBufferPtr)[triangleIndex[2] * m_Pipeline->m_CreateInfo.vertexItemSize]
 			};
 
-			void* vertexDataOut[3] = {
-				m_VertexToFragmentDataAllocator->Allocate(m_Pipeline->m_CreateInfo.vertexToFragmentDataSize + sizeof(ShaderBuiltIn)),
-				m_VertexToFragmentDataAllocator->Allocate(m_Pipeline->m_CreateInfo.vertexToFragmentDataSize + sizeof(ShaderBuiltIn)),
-				m_VertexToFragmentDataAllocator->Allocate(m_Pipeline->m_CreateInfo.vertexToFragmentDataSize + sizeof(ShaderBuiltIn))
-			};
-
-			ShaderBuiltIn* builtInRefs[3] = {
-				(ShaderBuiltIn*)(((U8*)vertexDataOut[0]) + m_Pipeline->m_CreateInfo.vertexToFragmentDataSize),
-				(ShaderBuiltIn*)(((U8*)vertexDataOut[1]) + m_Pipeline->m_CreateInfo.vertexToFragmentDataSize),
-				(ShaderBuiltIn*)(((U8*)vertexDataOut[2]) + m_Pipeline->m_CreateInfo.vertexToFragmentDataSize)
-			};
+			
+			auto seedTraingle = ShaderTriangleRef(m_VertexToFragmentDataAllocator, m_Pipeline->m_CreateInfo.vertexToFragmentDataSize);
 
 			for (auto i = 0; i < 3; ++i)
 			{
-				builtInRefs[i]->Reset();
-				builtInRefs[i]->VertexIndex = payload.indexStart * 3 + i;
-				m_Pipeline->m_CreateInfo.vertexShader->Execute(vertexData[i], vertexDataOut[i], builtInRefs[i]);
+				seedTraingle.GetBuiltInRef(i)->Reset();
+				seedTraingle.GetBuiltInRef(i)->VertexIndex = payload.indexStart * 3 + i;
+				m_Pipeline->m_CreateInfo.vertexShader->Execute(vertexData[i], seedTraingle.GetVertexData(i), seedTraingle.GetBuiltInRef(i));
+				seedTraingle.GetBuiltInRef(i)->Position /= seedTraingle.GetBuiltInRef(i)->Position[3];
 			}
+			seedTraingle.Log();
+
+
+
 
 			// TODO: Clip
 			// TODO: Cull
-			// TODO: Viewport transform
-			// TODO: Perspective divide
 			// TODO: Send to rasterizer
 
 			

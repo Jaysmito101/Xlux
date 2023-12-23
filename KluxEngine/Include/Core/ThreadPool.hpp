@@ -70,6 +70,11 @@ namespace klux
 			return m_IsPaused;
 		}
 
+		inline void SetSleepDuration(Size duration)
+		{
+			m_SleepDuration = duration;
+		}
+
 		template <U32 P, typename Q, typename R>
 		friend class ThreadPool;
 
@@ -98,7 +103,7 @@ namespace klux
 			{
 				while ((m_IsPaused || m_Jobs.empty()) && m_IsAlive)
 				{
-					std::this_thread::yield();
+					std::this_thread::sleep_for(std::chrono::milliseconds(m_SleepDuration));
 				}
 
 				if (m_Jobs.size() > 0)
@@ -132,6 +137,7 @@ namespace klux
 		Bool m_IsPaused = false;
 		Bool m_IsRunning = false;
 		std::thread m_Thread;
+		Size m_SleepDuration = 2;
 	};
 
 	namespace internal_
