@@ -13,10 +13,11 @@ namespace klux
 
 		const auto indexBufferPtr = m_IndexBuffer->GetDataPtr();
 		const auto vertexBufferPtr = m_VertexBuffer->GetDataPtr();
+
 		const U32 triangleIndex[3] = {
-			((U32*)indexBufferPtr)[payload.indexStart * 3 + 0],
-			((U32*)indexBufferPtr)[payload.indexStart * 3 + 1],
-			((U32*)indexBufferPtr)[payload.indexStart * 3 + 2]
+			((U32*)indexBufferPtr)[payload.indexStart + 0],
+			((U32*)indexBufferPtr)[payload.indexStart + 1],
+			((U32*)indexBufferPtr)[payload.indexStart + 2]
 		};
 
 		void* vertexData[3] = {

@@ -41,8 +41,8 @@ public:
 		dataOut->color = dataIn->color;
 
 		auto pos = dataIn->position;
-		pos[0] *= std::sinf(klux::utils::GetTime() * 2.0f) + 1.0f;
-		pos[1] *= std::cosf(klux::utils::GetTime() * 2.0f);
+		//pos[0] *= std::sinf(klux::utils::GetTime() * 2.0f) + 1.0f;
+		//pos[1] *= std::cosf(klux::utils::GetTime() * 2.0f);
 		builtIn->Position = klux::math::Vec4(pos, 1.0f);
 		return true;
 	}
@@ -85,13 +85,15 @@ int main()
 	auto pipeline = device->CreatePipeline(createInfo);
 
 	const auto vertices = std::vector<VertexInData>{
-		VertexInData(klux::math::Vec3(-0.5f, -0.5f, 0.0f), klux::math::Vec3(1.0f, 0.0f, 0.0f)),
-		VertexInData(klux::math::Vec3(0.5f, -0.5f, 0.0f), klux::math::Vec3(0.0f, 1.0f, 0.0f)),
-		VertexInData(klux::math::Vec3(0.0f,  0.5f, 0.0f), klux::math::Vec3(0.0f, 0.0f, 1.0f))
+		VertexInData(klux::math::Vec3(-0.5f, -0.5f, 0.0f), klux::math::Vec3(0.0f, 0.0f, 0.0f)),
+		VertexInData(klux::math::Vec3(0.5f,  0.5f, 0.0f), klux::math::Vec3(1.0f, 1.0f, 0.0f)),
+		VertexInData(klux::math::Vec3(0.5f, -0.5f, 0.0f), klux::math::Vec3(1.0f, 0.0f, 0.0f)),
+		VertexInData(klux::math::Vec3(-0.5f,  0.5f, 0.0f), klux::math::Vec3(0.0f, 1.0f, 0.0f))
 	};
 
 	const auto indices = std::vector<klux::U32>{
-		0, 1, 2
+		3, 2, 0,
+		3, 1, 2
 	};
 
 	auto totalSize = sizeof(VertexInData) * vertices.size() + sizeof(klux::U32) * indices.size();

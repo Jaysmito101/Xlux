@@ -105,7 +105,7 @@ namespace klux
 		const F32 v = areaPCA / areaTriangle;
 		const F32 w = 1.0f - u - v;
 		
-		return math::Vec3( u, v, w );
+		return math::Vec3( w, v, u );
 	}
 
 

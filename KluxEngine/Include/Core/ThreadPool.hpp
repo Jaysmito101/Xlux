@@ -109,7 +109,7 @@ namespace klux
 				while ((m_IsPaused || m_Jobs.empty()) && m_IsAlive)
 				{
 					std::this_thread::sleep_for(std::chrono::microseconds(m_SleepDuration));
-					//std::this_thread::yield();
+					// std::this_thread::yield();
 				}
 
 				if (m_Jobs.size() > 0)
