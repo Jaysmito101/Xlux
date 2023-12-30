@@ -5,30 +5,28 @@
 struct VertexInData
 {
 	klux::math::Vec3 position;
+	klux::math::Vec3 color;
 
-	VertexInData(klux::math::Vec3 pos)
-	{
-		position = pos;
-	}
-
-	VertexInData(const VertexInData& other)
-	{
-		position = other.position;
-	}
+	VertexInData(klux::math::Vec3 pos, klux::math::Vec3 col)
+		: position(pos), color(col)
+	{}
 };
 
 struct VertexOutData
 {
 	klux::math::Vec3 position = klux::math::Vec3(0.0f, 0.0f, 0.0f);
+	klux::math::Vec3 color = klux::math::Vec3(0.0f, 0.0f, 0.0f);
 
 	inline VertexOutData Scaled(klux::F32 scale) const
 	{
-		return VertexOutData{ position * scale };
+		return VertexOutData(position * scale, color * scale);
 	}
 
-	inline VertexOutData Add(const VertexOutData& other) const
+	inline void Add(const VertexOutData& other)
 	{
-		return VertexOutData{ position + other.position };
+		position += other.position;
+		color += other.color;
+
 	}
 };
 
@@ -40,19 +38,23 @@ public:
 		//klux::log::Info("vShader[{}]: {} {} {}", builtIn->VertexIndex, dataIn->position[0], dataIn->position[1], dataIn->position[2]);
 
 		dataOut->position = dataIn->position;
-		builtIn->Position = klux::math::Vec4(dataIn->position, 1.0f);
+		dataOut->color = dataIn->color;
+
+		auto pos = dataIn->position;
+		pos[0] *= std::sinf(klux::utils::GetTime() * 2.0f) + 1.0f;
+		pos[1] *= std::cosf(klux::utils::GetTime() * 2.0f);
+		builtIn->Position = klux::math::Vec4(pos, 1.0f);
 		return true;
 	}
 };
 
-class HelloWorldFShader : public klux::IShaderG<VertexOutData, klux::FragShaderOutput>
+class HelloWorldFShader : public klux::IShaderG<VertexOutData, klux::FragmentShaderOutput>
 {
 public:
-	klux::Bool Execute(const klux::RawPtr<VertexOutData> dataIn, klux::RawPtr<klux::FragShaderOutput> dataOut, klux::RawPtr<klux::ShaderBuiltIn> builtIn)
+	klux::Bool Execute(const klux::RawPtr<VertexOutData> dataIn, klux::RawPtr<klux::FragmentShaderOutput> dataOut, klux::RawPtr<klux::ShaderBuiltIn> builtIn)
 	{
-		(void)dataIn;
 		(void)builtIn;
-		dataOut->Color = klux::math::Vec4(1.0f, 0.0f, 0.0f, 1.0f);
+		dataOut->Color[0] = klux::math::Vec4(dataIn->color, 1.0f);
 		return true;
 	}
 };
@@ -75,7 +77,7 @@ int main()
 
 	auto createInfo = klux::PipelineCreateInfo()
 		.SetShader(vertexShader, klux::ShaderStage_Vertex)
-		.SetShader(vertexShader, klux::ShaderStage_Fragment)
+		.SetShader(fragmentShader, klux::ShaderStage_Fragment)
 		.SetInterpolator(interpolator)
 		.SetVertexItemSize(sizeof(VertexInData))
 		.SetVertexToFragmentDataSize(sizeof(VertexOutData));
@@ -83,9 +85,9 @@ int main()
 	auto pipeline = device->CreatePipeline(createInfo);
 
 	const auto vertices = std::vector<VertexInData>{
-		VertexInData(klux::math::Vec3(-0.5f, -0.5f, 0.0f)),
-		VertexInData(klux::math::Vec3(0.5f, -0.5f, 0.0f)),
-		VertexInData(klux::math::Vec3(0.0f,  0.5f, 0.0f))
+		VertexInData(klux::math::Vec3(-0.5f, -0.5f, 0.0f), klux::math::Vec3(1.0f, 0.0f, 0.0f)),
+		VertexInData(klux::math::Vec3(0.5f, -0.5f, 0.0f), klux::math::Vec3(0.0f, 1.0f, 0.0f)),
+		VertexInData(klux::math::Vec3(0.0f,  0.5f, 0.0f), klux::math::Vec3(0.0f, 0.0f, 1.0f))
 	};
 
 	const auto indices = std::vector<klux::U32>{
@@ -130,9 +132,8 @@ int main()
 
 		renderer->EndFrame();
 
-		klux::log::Trace("---------------------------------- FRAME -------------------------------");
-
-		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		// klux::log::Trace("---------------------------------- FRAME -------------------------------");
+		 //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
 
 		Window::SwapBuffer();

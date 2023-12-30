@@ -12,11 +12,15 @@ set(SOURCES
 # core
     ./Source/Core/Logger.cpp
     ./Source/Core/Utils.cpp
+    ./Source/Core/LinearAllocator.cpp
 # impl
     ./Source/Impl/KluxDevice.cpp
     ./Source/Impl/KluxDeviceMemory.cpp
     ./Source/Impl/KluxBuffer.cpp
     ./Source/Impl/KluxPipeline.cpp
+    ./Source/Impl/KluxVertexShaderWorker.cpp
+    ./Source/Impl/KluxFragmentShaderWorker.cpp
+    ./Source/Impl/KluxFrameClearWorker.cpp
     ./Source/Impl/KluxRenderer.cpp
 )
 

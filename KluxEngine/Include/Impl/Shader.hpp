@@ -43,14 +43,30 @@ namespace klux
 			m_BuiltInRefs[2] = reinterpret_cast<RawPtr<ShaderBuiltIn>>(reinterpret_cast<U8*>(m_VertexData[2]) + vertexDataSize);
 		}
 
+		ShaderTriangleRef() {}
+
 		inline RawPtr<ShaderBuiltIn>* GetBuiltInRefs() { return m_BuiltInRefs; }
 		inline RawPtr<void>* GetVertexData() { return m_VertexData; }
 
 		inline RawPtr<void> GetVertexData(U32 index) { return m_VertexData[index]; }
 		inline RawPtr<ShaderBuiltIn> GetBuiltInRef(U32 index) { return m_BuiltInRefs[index]; }
+		inline math::Vec4 GetBoundingBox() const
+		{
+			math::Vec4 result = math::Vec4(m_BuiltInRefs[0]->Position[0], m_BuiltInRefs[0]->Position[1], m_BuiltInRefs[0]->Position[0], m_BuiltInRefs[0]->Position[1]);
+
+			for (U32 i = 1; i < 3; ++i)
+			{
+				result[0] = std::min(result[0], m_BuiltInRefs[i]->Position[0]);
+				result[1] = std::min(result[1], m_BuiltInRefs[i]->Position[1]);
+				result[2] = std::max(result[2], m_BuiltInRefs[i]->Position[0]);
+				result[3] = std::max(result[3], m_BuiltInRefs[i]->Position[1]);
+			}
+
+			return result;
+		}
 
 #ifndef NDEBUG
-		inline void Log()
+		inline void Log() const 
 		{
 			log::Info("TriangleRef: {{\n\tPos[0]: ({}, {}, {})\n\tPos[1]: ({}, {}, {})\n\tPos[2]: ({}, {}, {})\n}}",
 				m_BuiltInRefs[0]->Position[0], m_BuiltInRefs[0]->Position[1], m_BuiltInRefs[0]->Position[2],
@@ -65,10 +81,11 @@ namespace klux
 		Size m_VertexDataSize = 0;
 	};
 
-	class FragShaderOutput
+	struct FragmentShaderOutput
 	{
-	public:
-		math::Vec4 Color;
+		math::Vec4 Color[4];
+
+		inline FragmentShaderOutput() {}
 	};
 
 	class IShader

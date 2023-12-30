@@ -9,7 +9,7 @@ namespace klux
 	{
 	public:
 		virtual ~IJob() = default;
-		virtual Bool Execute(const JobPayload& payload, JobResult& result) = 0;
+		virtual Bool Execute(JobPayload payload, JobResult& result) = 0;
 	};
 
 	template <typename JobPayload, typename JobResult>
@@ -41,7 +41,7 @@ namespace klux
 
 		inline void WaitJobDone()
 		{
-			while (HasJob() && IsAlive())
+			while ((HasJob() && IsAlive()) || IsWorking())
 			{
 				std::this_thread::yield();
 			}
@@ -58,6 +58,11 @@ namespace klux
 			JobResult result = m_JobDone.front();
 			m_JobDone.pop();
 			return result;
+		}
+
+		inline Bool IsWorking() const
+		{
+			return m_IsWorking;
 		}
 
 		inline Bool IsAlive() const
@@ -103,11 +108,13 @@ namespace klux
 			{
 				while ((m_IsPaused || m_Jobs.empty()) && m_IsAlive)
 				{
-					std::this_thread::sleep_for(std::chrono::milliseconds(m_SleepDuration));
+					std::this_thread::sleep_for(std::chrono::microseconds(m_SleepDuration));
+					//std::this_thread::yield();
 				}
 
 				if (m_Jobs.size() > 0)
 				{
+					m_IsWorking = true;
 
 					{
 						std::lock_guard<std::mutex> lock(m_JobMutex);
@@ -122,6 +129,8 @@ namespace klux
 						std::lock_guard<std::mutex> lock(m_JobDoneMutex);
 						m_JobDone.push(result);
 					}
+
+					m_IsWorking = false;
 				}
 			}
 			m_IsRunning = false;
@@ -136,8 +145,9 @@ namespace klux
 		Bool m_IsAlive = false;
 		Bool m_IsPaused = false;
 		Bool m_IsRunning = false;
+		Bool m_IsWorking = false;
 		std::thread m_Thread;
-		Size m_SleepDuration = 2;
+		Size m_SleepDuration = 10;
 	};
 
 	namespace internal_

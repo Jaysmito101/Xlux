@@ -22,4 +22,15 @@ Release
 *.vcproj
 *.sln
 *.spv
+**.obj
+**.exe
+**.ilk
+**.tlog
+**.dll
+**.recipe
+**.log
+**.lib
+**.pdb
+**.dll
+**.exp
 Makefile

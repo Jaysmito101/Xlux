@@ -20,6 +20,10 @@ namespace klux
 
 			KLUX_FORCE_INLINE Vec()
 			{
+				for (Size i = 0; i < N; ++i)
+				{
+					m_Data[i] = ValueTypeT();
+				}
 			}
 
 			KLUX_FORCE_INLINE Vec(const ValueTypeT& value)
@@ -34,6 +38,29 @@ namespace klux
 			{
 				std::memcpy(m_Data, data, sizeof(m_Data));
 			}
+
+			/*template <Size M, VectorValueType... Args>
+			static KLUX_FORCE_INLINE Vec<N, ValueTypeT> From(const Vec<M>& other, Args... args)
+			{
+				auto result = Vec<N, ValueTypeT>();
+				if constexpr ((M + sizeof...(args)) < N) {
+					throw std::logic_error("Invalid number of arguments");
+				}
+				else
+				{
+					if constexpr (sizeof...(args) == 0)
+					{
+						std::memcpy(result.m_Data, other.m_Data, sizeof(other.m_Data));
+					}
+					else
+					{
+						std::memcpy(result.m_Data, other.m_Data, std::clamp(M, Size(0), N) * sizeof(ValueTypeT));
+						ValueTypeT data[] = { args... };
+						std::memcpy(result.m_Data + M, data, sizeof(data));
+					}
+				}
+				return result;
+			}*/
 
 			template <Size M, VectorValueType... Args>
 			KLUX_FORCE_INLINE Vec(const Vec<M>& other, Args... args)
@@ -66,10 +93,10 @@ namespace klux
 
 
 
-			KLUX_FORCE_INLINE Vec(Vec<N, ValueTypeT>&& other)
+			/*KLUX_FORCE_INLINE Vec(Vec<N, ValueTypeT>&& other)
 			{
 				std::memcpy(m_Data, other.m_Data, sizeof(m_Data));
-			}
+			}*/
 
 			KLUX_FORCE_INLINE Vec<N, ValueTypeT>& operator=(const Vec<N, ValueTypeT>& other)
 			{
@@ -77,11 +104,11 @@ namespace klux
 				return *this;
 			}
 
-			KLUX_FORCE_INLINE Vec<N, ValueTypeT>& operator=(Vec<N, ValueTypeT>&& other)
+			/*KLUX_FORCE_INLINE Vec<N, ValueTypeT>& operator=(Vec<N, ValueTypeT>&& other)
 			{
 				std::memcpy(m_Data, other.m_Data, sizeof(m_Data));
 				return *this;
-			}
+			}*/
 
 			KLUX_FORCE_INLINE ValueTypeT& operator[](Size index)
 			{
@@ -330,7 +357,6 @@ namespace klux
 			os << ")";
 			return os;
 		};
-
 
 
 		using Vec2 = Vec<2, ValueType>;

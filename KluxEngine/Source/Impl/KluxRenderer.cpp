@@ -8,147 +8,6 @@
 namespace klux
 {
 
-	class FrameClearWorker : public IJob<FrameClearWorkerInput, U32>
-	{
-	public:
-		FrameClearWorker() = default;
-		~FrameClearWorker() = default;
-
-		Bool Execute(const FrameClearWorkerInput& payload, U32& result) override
-		{
-			(void)result;
-			const auto maxX = std::min(payload.x + payload.width, static_cast<U32>(m_Framebuffer->GetWidth()));
-			const auto maxY = std::min(payload.y + payload.height, static_cast<U32>(m_Framebuffer->GetHeight()));
-
-			if (m_ClearColor)
-			{
-				for (auto ch = 0; ch < (I32)m_Framebuffer->GetColorAttachmentCount(); ++ch)
-				{
-					for (auto y = payload.y; y < maxY; ++y)
-					{
-						for (auto x = payload.x; x < maxX; ++x)
-						{
-							m_Framebuffer->SetColorPixel(ch, x, y, m_Color[0], m_Color[1], m_Color[2], m_Color[3]);
-						}
-					}
-				}
-			}
-
-			if (m_ClearDepth && m_Framebuffer->HasDepthAttachment())
-			{
-				for (auto y = payload.y; y < maxY; ++y)
-				{
-					for (auto x = payload.x; x < maxX; ++x)
-					{
-						m_Framebuffer->SetDepthPixel(x, y, 10000000.0f);
-					}
-				}
-			}
-
-
-			return false;
-		}
-
-		inline void SetFramebuffer(RawPtr<IFramebuffer> fbo)
-		{
-			m_Framebuffer = fbo;
-		}
-
-		inline void SetClearColor(const math::Vec4& color)
-		{
-			m_Color = color;
-		}
-
-		inline void SetEnableClearDepth(Bool clearDepth)
-		{
-			m_ClearDepth = clearDepth;
-		}
-
-		inline void SetEnableClearColor(Bool clearColor)
-		{
-			m_ClearColor = clearColor;
-		}
-
-	private:
-		RawPtr<IFramebuffer> m_Framebuffer = nullptr;
-		Bool m_ClearColor = true;
-		Bool m_ClearDepth = true;
-		math::Vec4 m_Color = { 0.0f, 0.0f, 0.0f, 1.0f };
-	};
-
-	class VertexShaderWorker : public IJob<VertexShaderWorkerInput, U32>
-	{
-	public:
-		VertexShaderWorker() = default;
-		~VertexShaderWorker() = default;
-
-		Bool Execute(const VertexShaderWorkerInput& payload, U32& result) override
-		{
-			(void)result;
-
-			const auto indexBufferPtr = m_IndexBuffer->GetDataPtr();
-			const auto vertexBufferPtr = m_VertexBuffer->GetDataPtr();
-			const U32 triangleIndex[3] = {
-				((U32*)indexBufferPtr)[payload.indexStart * 3 + 0],
-				((U32*)indexBufferPtr)[payload.indexStart * 3 + 1],
-				((U32*)indexBufferPtr)[payload.indexStart * 3 + 2]
-			};
-
-			void* vertexData[3] = {
-				&((U8*)vertexBufferPtr)[triangleIndex[0] * m_Pipeline->m_CreateInfo.vertexItemSize],
-				&((U8*)vertexBufferPtr)[triangleIndex[1] * m_Pipeline->m_CreateInfo.vertexItemSize],
-				&((U8*)vertexBufferPtr)[triangleIndex[2] * m_Pipeline->m_CreateInfo.vertexItemSize]
-			};
-
-			
-			auto seedTraingle = ShaderTriangleRef(m_VertexToFragmentDataAllocator, m_Pipeline->m_CreateInfo.vertexToFragmentDataSize);
-
-			for (auto i = 0; i < 3; ++i)
-			{
-				seedTraingle.GetBuiltInRef(i)->Reset();
-				seedTraingle.GetBuiltInRef(i)->VertexIndex = payload.indexStart * 3 + i;
-				m_Pipeline->m_CreateInfo.vertexShader->Execute(vertexData[i], seedTraingle.GetVertexData(i), seedTraingle.GetBuiltInRef(i));
-				seedTraingle.GetBuiltInRef(i)->Position /= seedTraingle.GetBuiltInRef(i)->Position[3];
-			}
-			seedTraingle.Log();
-
-
-
-
-			// TODO: Clip
-			// TODO: Cull
-			// TODO: Send to rasterizer
-
-			
-			return false;
-		}
-
-		inline void SetVertexBuffer(RawPtr<Buffer> buffer)
-		{
-			m_VertexBuffer = buffer;
-		}
-
-		inline void SetIndexBuffer(RawPtr<Buffer> buffer)
-		{
-			m_IndexBuffer = buffer;
-		}
-
-		inline void SetPipeline(RawPtr<Pipeline> pipeline)
-		{
-			m_Pipeline = pipeline;
-		}
-
-		inline void SetVertexToFragmentDataAllocator(RawPtr<LinearAllocator> allocator)
-		{
-			m_VertexToFragmentDataAllocator = allocator;
-		}
-
-	private:
-		RawPtr<Buffer> m_VertexBuffer = nullptr;
-		RawPtr<Buffer> m_IndexBuffer = nullptr;
-		RawPtr<Pipeline> m_Pipeline = nullptr;
-		RawPtr<LinearAllocator> m_VertexToFragmentDataAllocator = nullptr;
-	};
 
 	Renderer::Renderer()
 	{
@@ -157,6 +16,9 @@ namespace klux
 
 		m_VertexShaderJob = CreateRawPtr<VertexShaderWorker>();
 		m_VertexShaderThreadPool = CreateRawPtr<ThreadPool<8, VertexShaderWorkerInput, U32>>(m_VertexShaderJob);
+
+		m_FragmentShaderJob = CreateRawPtr<FragmentShaderWorker>();
+		m_FragmentShaderThreadPool = CreateRawPtr<ThreadPool<k_FragmentShaderWorkerCountX * k_FragmentShaderWorkerCountY, FragmentShaderWorkerInput, U32>>(m_FragmentShaderJob);
 
 		m_VertexToFragmentDataAllocator = CreateRawPtr<LinearAllocator>(1024 * 1024 * 128); // 128 MB
 	}
@@ -211,6 +73,9 @@ namespace klux
 #endif
 
 		m_ActiveFramebuffer = fbo;
+
+		m_FragmentShaderTileWidth = static_cast<U32>(std::ceil(static_cast<F32>(fbo->GetWidth()) / k_FragmentShaderWorkerCountX));
+		m_FragmentShaderTileHeight = static_cast<U32>(std::ceil(static_cast<F32>(fbo->GetHeight()) / k_FragmentShaderWorkerCountY));
 	}
 
 	void Renderer::BindPipeline(RawPtr<Pipeline> pipeline)
@@ -227,10 +92,12 @@ namespace klux
 		}
 #endif
 
-		reinterpret_cast<RawPtr<FrameClearWorker>>(m_FrameClearJob)->SetFramebuffer(m_ActiveFramebuffer);
-		reinterpret_cast<RawPtr<FrameClearWorker>>(m_FrameClearJob)->SetClearColor(m_ClearColor);
-		reinterpret_cast<RawPtr<FrameClearWorker>>(m_FrameClearJob)->SetEnableClearColor(color);
-		reinterpret_cast<RawPtr<FrameClearWorker>>(m_FrameClearJob)->SetEnableClearDepth(depth);
+		auto frameClearJob = reinterpret_cast<RawPtr<FrameClearWorker>>(m_FrameClearJob);
+
+		frameClearJob->SetFramebuffer(m_ActiveFramebuffer);
+		frameClearJob->SetClearColor(m_ClearColor);
+		frameClearJob->SetEnableClearColor(color);
+		frameClearJob->SetEnableClearDepth(depth);
 
 		const auto startX = m_ActiveViewport->x;
 		const auto startY = m_ActiveViewport->y;
@@ -251,7 +118,7 @@ namespace klux
 				m_FrameClearThreadPool->AddJob(input);
 			}
 		}
-		
+
 		m_FrameClearThreadPool->WaitJobDone();
 	}
 
@@ -317,15 +184,18 @@ namespace klux
 			klux::log::Error("Renderer::DrawIndexed() called with invalid index count");
 		}
 #endif
-		(void)vertexBuffer;
-		(void)indexBuffer;
-		(void)indexCount;
 
-		reinterpret_cast<RawPtr<VertexShaderWorker>>(m_VertexShaderJob)->SetIndexBuffer(indexBuffer);
-		reinterpret_cast<RawPtr<VertexShaderWorker>>(m_VertexShaderJob)->SetVertexBuffer(vertexBuffer);
-		reinterpret_cast<RawPtr<VertexShaderWorker>>(m_VertexShaderJob)->SetPipeline(m_ActivePipeline);
-		reinterpret_cast<RawPtr<VertexShaderWorker>>(m_VertexShaderJob)->SetVertexToFragmentDataAllocator(m_VertexToFragmentDataAllocator);
+		m_VertexToFragmentDataAllocator->Reset();
 
+		auto vertexShaderJob = reinterpret_cast<RawPtr<VertexShaderWorker>>(m_VertexShaderJob);
+
+		vertexShaderJob->SetIndexBuffer(indexBuffer);
+		vertexShaderJob->SetVertexBuffer(vertexBuffer);
+		vertexShaderJob->SetPipeline(m_ActivePipeline);
+		vertexShaderJob->SetFramebuffer(m_ActiveFramebuffer);
+		vertexShaderJob->SetVertexToFragmentDataAllocator(m_VertexToFragmentDataAllocator);
+
+		vertexShaderJob->SetRasterizer(std::bind(&Renderer::PassTriangleToFragmentShader, this, std::placeholders::_1));
 
 		for (auto i = 0; i < static_cast<I32>(indexCount); i += 3)
 		{
@@ -333,11 +203,43 @@ namespace klux
 		}
 
 
-		// m_VertexShaderThreadPool.AddJob()
 
-		// TODO: Implement this
+		m_VertexShaderThreadPool->WaitJobDone();
+		m_FragmentShaderThreadPool->WaitJobDone();
+	}
 
 
+	Bool Renderer::PassTriangleToFragmentShader(ShaderTriangleRef triangle)
+	{
+		auto boundingBox = triangle.GetBoundingBox(); // (xmin, ymin, xmax, ymax)
+		auto fragmentShaderJob = reinterpret_cast<RawPtr<FragmentShaderWorker>>(m_FragmentShaderJob);
+
+		fragmentShaderJob->SetFramebuffer(m_ActiveFramebuffer);
+		fragmentShaderJob->SetPipeline(m_ActivePipeline);
+		
+		FragmentShaderWorkerInput input = {};
+		input.triangle = triangle;
+
+		for (auto y = 0; y < k_FragmentShaderWorkerCountY; ++y)
+		{
+			for (auto x = 0; x < k_FragmentShaderWorkerCountX; ++x)
+			{
+				input.startX = static_cast<I32>(x * m_FragmentShaderTileWidth);
+				input.startY = static_cast<I32>(y * m_FragmentShaderTileHeight);
+				input.width = static_cast<I32>(m_FragmentShaderTileWidth);
+				input.height = static_cast<I32>(m_FragmentShaderTileHeight);
+
+				if (boundingBox[0] >= input.startX + input.width || boundingBox[2] <= input.startX ||
+					boundingBox[1] >= input.startY + input.height || boundingBox[3] <= input.startY)
+				{
+					continue;
+				}
+
+				m_FragmentShaderThreadPool->AddJob(input);
+			}
+		}
+
+		return false;
 	}
 
 }
