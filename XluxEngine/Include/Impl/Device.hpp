@@ -5,6 +5,7 @@
 #include "Impl/Buffer.hpp"
 #include "Impl/Pipeline.hpp"
 #include "Impl/Renderer.hpp"
+#include "Impl/Texture.hpp"
 
 namespace xlux
 {
@@ -26,6 +27,9 @@ namespace xlux
 		RawPtr<Renderer> CreateRenderer();
 		void DestroyRenderer(RawPtr<Renderer> renderer);
 
+		RawPtr<Texture2D> CreateTexture2D(U32 width, U32 height, ETexelFormat format);
+		void DestroyTexture(RawPtr<ITexture> texture);
+
 	private:
 		Device();
 		~Device();
@@ -35,5 +39,6 @@ namespace xlux
 		List<RawPtr<Pipeline>> m_PipelineList;
 		List<RawPtr<Buffer>> m_BufferList;
 		List<RawPtr<Renderer>> m_RendererList;
+		List<RawPtr<ITexture>> m_TextureList;
 	};
 }

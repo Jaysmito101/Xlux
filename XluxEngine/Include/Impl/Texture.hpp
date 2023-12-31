@@ -22,9 +22,10 @@ namespace xlux
 	};
 
 
-	class ITexture
+	class XLUX_API ITexture
 	{
 	public:
+		virtual ~ITexture() {}
 
 		inline I32 GetWidth() const { return GetSize().x; }
 		inline I32 GetHeight() const { return GetSize().y; }
@@ -45,7 +46,12 @@ namespace xlux
 
 		inline Size GetPixelCount() const
 		{
-			return GetWidth() * GetHeight();
+			return GetWidth() * GetHeight() * GetDepth();
+		}
+
+		inline Size GetSizeInBytes() const
+		{
+			return GetPixelCount() * GetPixelSize() * sizeof(F32); // internally everything is stored as F32
 		}
 
 		virtual Bool SetData(const void* data, Size size, Size offset) = 0;
@@ -60,7 +66,7 @@ namespace xlux
 		virtual math::Vec4 Sample(const math::Vec3& uvw) const { (void)uvw; return math::Vec4(1.0f, 0.0f, 1.0f, 1.0f); }
 	};
 
-	class Texture2D : public ITexture
+	class XLUX_API Texture2D : public ITexture
 	{
 	public:
 
@@ -76,10 +82,11 @@ namespace xlux
 		inline ETexelFormat GetFormat() const override { return m_Format; }
 		inline ETextureType GetType() const override { return TextureType_2D; }
 		inline U32 GetDepth() const override { return 1; }
+		inline void BindBuffer(RawPtr<Buffer> buffer) { m_Buffer = buffer; }
 
 		friend class Device;
 	private:
-		Texture2D(U32 width, U32 height, ETexelFormat format, RawPtr<Buffer> data);
+		Texture2D(U32 width, U32 height, ETexelFormat format);
 		~Texture2D();
 
 	private:

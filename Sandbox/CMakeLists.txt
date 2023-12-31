@@ -30,6 +30,12 @@ add_executable(01_hellotriangle
     ./Source/WindowFramebuffer.cpp
 )
 
+add_executable(02_textures
+    ./Source/02_Textures.cpp
+    ./Source/Win32_Window.cpp
+    ./Source/WindowFramebuffer.cpp
+)
+
 if (WIN32)
     add_compile_definitions(
         _CRT_SECURE_NO_WARNINGS

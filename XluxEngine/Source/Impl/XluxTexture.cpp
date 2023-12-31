@@ -4,8 +4,8 @@
 namespace xlux
 {
 
-	Texture2D::Texture2D(U32 width, U32 height, ETexelFormat format, RawPtr<Buffer> buffer)
-		: m_Width(width), m_Height(height), m_Format(format), m_Buffer(buffer)
+	Texture2D::Texture2D(U32 width, U32 height, ETexelFormat format)
+		: m_Width(width), m_Height(height), m_Format(format), m_Buffer(nullptr)
 	{
 	}
 

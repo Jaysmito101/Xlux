@@ -32,6 +32,11 @@ namespace xlux
 			DestroyPipeline(m_PipelineList[i]);
 		}
 
+		for (I32 i = (I32)m_TextureList.size() - 1; i >= 0; --i)
+		{
+			DestroyTexture(m_TextureList[i]);
+		}
+
 		// destroy all buffers
 		for (I32 i = (I32)m_BufferList.size() - 1; i >= 0; --i)
 		{
@@ -111,5 +116,22 @@ namespace xlux
 			m_RendererList.erase(it);
 		}
 		delete renderer;
+	}
+	
+	RawPtr<Texture2D> Device::CreateTexture2D(U32 width, U32 height, ETexelFormat format)
+	{
+		auto texture = new Texture2D(width, height, format);
+		m_TextureList.push_back(texture);
+		return texture;
+	}
+
+	void Device::DestroyTexture(RawPtr<ITexture> texture)
+	{
+		auto it = std::find(m_TextureList.begin(), m_TextureList.end(), texture);
+		if (it != m_TextureList.end())
+		{
+			m_TextureList.erase(it);
+		}
+		delete texture;
 	}
 }
