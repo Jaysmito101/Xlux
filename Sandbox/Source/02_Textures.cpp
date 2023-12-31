@@ -117,8 +117,6 @@ int main()
 	texture->SetData(textureData, texture->GetSizeInBytes(), 0);
 	stbi_image_free(textureData);
 
-	texture->Sample(xlux::math::Vec3(0.5f, 0.5f, 1.0f));
-
 	auto renderer = device->CreateRenderer();
 
 

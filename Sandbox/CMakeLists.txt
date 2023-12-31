@@ -36,6 +36,12 @@ add_executable(02_textures
     ./Source/WindowFramebuffer.cpp
 )
 
+add_executable(03_transforms
+	./Source/03_Transforms.cpp
+	./Source/Win32_Window.cpp
+	./Source/WindowFramebuffer.cpp
+)
+
 if (WIN32)
     add_compile_definitions(
         _CRT_SECURE_NO_WARNINGS
