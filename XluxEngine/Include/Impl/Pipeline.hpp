@@ -60,10 +60,11 @@ namespace xlux
 
 		ECompareFunction depthCompareFunction = CompareFunction_LessEqual;
 
-		bool cullFaceEnable = false;
-		bool depthTestEnable = false;
-		bool blendEnable = false;
-		bool rasterizerDiscardEnable = false;
+		Bool cullFaceEnable = false;
+		Bool depthTestEnable = false;
+		Bool blendEnable = false;
+		Bool rasterizerDiscardEnable = false;
+		Bool enableClipping = false;
 
 		PipelineCreateInfo() = default;
 		~PipelineCreateInfo() = default;
@@ -94,6 +95,12 @@ namespace xlux
 			{
 				xlux::log::Error("Invalid shader stage");
 			}
+			return *this;
+		}
+
+		PipelineCreateInfo& SetClippingEnable(bool enable)
+		{
+			enableClipping = enable;
 			return *this;
 		}
 

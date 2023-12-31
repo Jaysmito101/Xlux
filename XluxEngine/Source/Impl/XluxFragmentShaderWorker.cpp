@@ -165,6 +165,14 @@ namespace xlux
 		math::Vec4 dstColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 		math::Vec4 blendedColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 
+		if (m_Pipeline->m_CreateInfo.depthTestEnable && framebuffer->HasDepthAttachment())
+		{
+			F32 currentDepth = 0.0f;
+			framebuffer->GetDepthPixel(px, py, currentDepth);
+			if (output.Depth >= currentDepth) return;
+		}
+
+
 		for (U32 i = 0; i < std::min(framebuffer->GetColorAttachmentCount(), 4u); ++i)
 		{
 			auto srcColor = output.Color[i];

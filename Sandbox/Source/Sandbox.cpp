@@ -47,8 +47,9 @@ class HelloWorldFShader : public xlux::IShaderG<VertexOutData, xlux::FragmentSha
 public:
 	xlux::Bool Execute(const xlux::RawPtr<VertexOutData> dataIn, xlux::RawPtr<xlux::FragmentShaderOutput> dataOut, xlux::RawPtr<xlux::ShaderBuiltIn> builtIn)
 	{
-		(void)builtIn;
-		dataOut->Color[0] = xlux::math::Vec4(dataIn->color, 1.0f);
+		(void)builtIn; // unused
+		(void) dataIn; // unused
+		 dataOut->Color[0] = xlux::math::Vec4(dataIn->color, 1.0f);
 		return true;
 	}
 };
@@ -75,16 +76,17 @@ int main()
 		.SetVertexToFragmentDataSize(sizeof(VertexOutData));
 
 	auto pipeline = device->CreatePipeline(createInfo);
-
+	
 	const auto vertices = std::vector<VertexInData>{
-		VertexInData(xlux::math::Vec3(-0.5f, -0.5f, 1.0f), xlux::math::Vec3(1.0f, 0.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(0.5f, -0.5f, 0.0f), xlux::math::Vec3(0.0f, 1.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(-0.5f,  0.5f, 0.0f), xlux::math::Vec3(0.0f, 0.0f, 1.0f)),
-		VertexInData(xlux::math::Vec3(0.5f,  0.5f, 0.0f), xlux::math::Vec3(0.0f, 0.0f, 1.0f))
+		VertexInData(xlux::math::Vec3(-0.5f, -0.5f, 0.0f), xlux::math::Vec3(0.0f, 0.0f, 0.0f)),
+		VertexInData(xlux::math::Vec3(0.5f, -0.5f, 0.0f), xlux::math::Vec3(1.0f, 0.0f, 0.0f)),
+		VertexInData(xlux::math::Vec3(-0.5f,  0.5f, 0.0f), xlux::math::Vec3(0.0f, 1.0f, 0.0f)),
+		VertexInData(xlux::math::Vec3(0.5f,  0.5f, 1.0f), xlux::math::Vec3(1.0f, 1.0f, 0.0f))
 	};
 
 	const auto indices = std::vector<xlux::U32>{
-		0, 1, 2
+		0, 1, 2,
+		1, 2, 3
 	};
 
 	auto totalSize = sizeof(VertexInData) * vertices.size() + sizeof(xlux::U32) * indices.size();

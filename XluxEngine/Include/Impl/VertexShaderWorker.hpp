@@ -34,6 +34,7 @@ namespace xlux
 	private:
 		List<ShaderTriangleRef> ClipTrianglesAgainstPlane(const List<ShaderTriangleRef>& triangles, const math::Vec3& planeNormal, const math::Vec3& planePoint);
 		List<ShaderTriangleRef> ClipTriangleAgainstPlane(const ShaderTriangleRef& triangle, const math::Vec3& planeNormal, const math::Vec3& planePoint);
+		Pair<math::Vec3, F32> PlaneIntersection(const math::Vec3& planeNormal, const math::Vec3& planePoint, const math::Vec3& lineStart, const math::Vec3& lineEnd);
 
 	private:
 		RawPtr<Buffer> m_VertexBuffer = nullptr;
