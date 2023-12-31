@@ -1,7 +1,7 @@
 #pragma once
-#include "Klux.hpp"
+#include "Xlux.hpp"
 
-enum WindowEvent : klux::U32
+enum WindowEvent : xlux::U32
 {
 	WindowResize = 0x0ABF01,
 	WindowClose = 0x0ABF02
@@ -12,43 +12,47 @@ class WindowFramebuffer;
 class Window
 {
 public:
-	inline static void Create(const klux::String& title, klux::I32 width, klux::I32 height) { if (!s_Instance) s_Instance = new Window(title, width, height); }
+	inline static void Create(const xlux::String& title, xlux::I32 width, xlux::I32 height) { if (!s_Instance) s_Instance = new Window(title, width, height); }
 	static void Destroy() { delete s_Instance; }
-	static klux::Bool HasClosed();
+	static xlux::Bool HasClosed();
 	static void Update();
 	static void SwapBuffer();
-	static void Clear(klux::F32 r, klux::F32 g, klux::F32 b, klux::F32 a);
-	static void SetPixel(klux::F32 x, klux::F32 y, klux::F32 r, klux::F32 g, klux::F32 b, klux::F32 a);
-	static void SetTitle(const klux::String& title);
+	static void Clear(xlux::F32 r, xlux::F32 g, xlux::F32 b, xlux::F32 a);
+	static void SetPixel(xlux::F32 x, xlux::F32 y, xlux::F32 r, xlux::F32 g, xlux::F32 b, xlux::F32 a);
+	static void SetTitle(const xlux::String& title);
 
-	inline static klux::I32 GetWidth() { return s_Instance->m_Width; }
-	inline static klux::I32 GetHeight(){ return s_Instance->m_Height; }
-	inline static void SetWidth(klux::I32 width) { s_Instance->m_Width = width; }
-	inline static void SetHeight(klux::I32 height) { s_Instance->m_Height = height; }
-	inline static klux::RawPtr<WindowFramebuffer> GetFramebuffer() { return s_Instance->m_Framebuffer; }
+	inline static xlux::I32 GetWidth() { return s_Instance->m_Width; }
+	inline static xlux::I32 GetHeight(){ return s_Instance->m_Height; }
+	inline static void SetWidth(xlux::I32 width) { s_Instance->m_Width = width; }
+	inline static void SetHeight(xlux::I32 height) { s_Instance->m_Height = height; }
+	inline static xlux::RawPtr<WindowFramebuffer> GetFramebuffer() { return s_Instance->m_Framebuffer; }
 
 private:
-	Window(const klux::String& title, klux::I32 width, klux::I32 height);
+	Window(const xlux::String& title, xlux::I32 width, xlux::I32 height);
 	~Window();
 
 private:
-	klux::String m_Title;
-	klux::I32 m_Width, m_Height;
-	klux::RawPtr<WindowFramebuffer> m_Framebuffer;
+	xlux::String m_Title;
+	xlux::I32 m_Width, m_Height;
+	xlux::RawPtr<WindowFramebuffer> m_Framebuffer;
 
-	static klux::RawPtr<Window> s_Instance;
+	static xlux::RawPtr<Window> s_Instance;
 };
 
-class WindowFramebuffer : public klux::IFramebuffer
+class WindowFramebuffer : public xlux::IFramebuffer
 {
 public:
 	WindowFramebuffer() = default;
 	~WindowFramebuffer() = default;
 
-	virtual klux::U32 GetColorAttachmentCount() const override { return 1; }
-	virtual klux::Bool HasDepthAttachment() const override { return false; }
-	virtual klux::Pair<klux::U32, klux::U32> GetSize() const override;
-	virtual void SetColorPixel(klux::I32 channel, klux::I32 x, klux::I32 y, klux::F32 r, klux::F32 g, klux::F32 b, klux::F32 a) override;
-	virtual void SetDepthPixel(klux::I32 x, klux::I32 y, klux::F32 depth) override;
+	virtual xlux::U32 GetColorAttachmentCount() const override { return 1; }
+	virtual xlux::Bool HasDepthAttachment() const override { return false; }
+	virtual xlux::Pair<xlux::U32, xlux::U32> GetSize() const override;
+	virtual void SetColorPixel(xlux::I32 channel, xlux::I32 x, xlux::I32 y, xlux::F32 r, xlux::F32 g, xlux::F32 b, xlux::F32 a) override;
+	virtual void SetDepthPixel(xlux::I32 x, xlux::I32 y, xlux::F32 depth) override;
+
+	virtual void GetColorPixel(xlux::I32 channel, xlux::I32 x, xlux::I32 y, xlux::F32& r, xlux::F32& g, xlux::F32& b, xlux::F32& a) const;
+	virtual void GetDepthPixel(xlux::I32 x, xlux::I32 y, xlux::F32& depth) const;
+
 
 };

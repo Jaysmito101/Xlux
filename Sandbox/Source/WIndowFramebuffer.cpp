@@ -1,26 +1,46 @@
 #include "Window.hpp"
 
-klux::Pair<klux::U32, klux::U32> WindowFramebuffer::GetSize() const
+xlux::Pair<xlux::U32, xlux::U32> WindowFramebuffer::GetSize() const
 {
-	return klux::MakePair<klux::U32, klux::U32>(Window::GetWidth(), Window::GetHeight());
+	return xlux::MakePair<xlux::U32, xlux::U32>(Window::GetWidth(), Window::GetHeight());
 }
 
-void WindowFramebuffer::SetColorPixel(klux::I32 channel, klux::I32 x, klux::I32 y, klux::F32 r, klux::F32 g, klux::F32 b, klux::F32 a)
+void WindowFramebuffer::SetColorPixel(xlux::I32 channel, xlux::I32 x, xlux::I32 y, xlux::F32 r, xlux::F32 g, xlux::F32 b, xlux::F32 a)
 {
 	if (channel != 0)
 	{
-		klux::log::Error("Invalid channel for Window Framebuffer");
+		xlux::log::Error("Invalid channel for Window Framebuffer");
 	}
 
 	Window::SetPixel(
-		(klux::F32)x / (klux::F32)Window::GetWidth(),
-		(klux::F32)y / (klux::F32)Window::GetHeight(),
+		(xlux::F32)x / (xlux::F32)Window::GetWidth(),
+		(xlux::F32)y / (xlux::F32)Window::GetHeight(),
 		r, g, b, a
 	);
 }
 
-void WindowFramebuffer::SetDepthPixel(klux::I32 x, klux::I32 y, klux::F32 depth)
+void WindowFramebuffer::SetDepthPixel(xlux::I32 x, xlux::I32 y, xlux::F32 depth)
 {
 	(void)x, (void)y, (void)depth;
 	return;
+}
+
+
+void WindowFramebuffer::GetColorPixel(xlux::I32 channel, xlux::I32 x, xlux::I32 y, xlux::F32& r, xlux::F32& g, xlux::F32& b, xlux::F32& a) const
+{
+	(void)x, (void)y;
+
+	if (channel != 0)
+	{
+		xlux::log::Error("Invalid channel for Window Framebuffer");
+	}
+
+	r = g = b = 0.0f;
+	a = 1.0f;
+}
+
+void WindowFramebuffer::GetDepthPixel(xlux::I32 x, xlux::I32 y, xlux::F32& depth) const
+{
+	(void)x, (void)y;
+	depth = 0.0f;
 }

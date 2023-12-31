@@ -5,25 +5,25 @@
 
 #include "Window.hpp"
 
-klux::RawPtr<Window> Window::s_Instance = nullptr;
+xlux::RawPtr<Window> Window::s_Instance = nullptr;
 
 struct Win32_GraphicsBuffer
 {
 	HBITMAP hbm = NULL;
-	klux::RawPtr<klux::U32> data = nullptr;
+	xlux::RawPtr<xlux::U32> data = nullptr;
 
 	Win32_GraphicsBuffer()
 	{ }
 
-	Win32_GraphicsBuffer(klux::I32 wd, klux::I32 hgt, klux::Bool onlyMemory = false)
+	Win32_GraphicsBuffer(xlux::I32 wd, xlux::I32 hgt, xlux::Bool onlyMemory = false)
 	{
 		if (onlyMemory)
 		{
-			this->data = new klux::U32[wd * hgt];
-			memset(this->data, 0, wd * hgt * sizeof(klux::U32));
+			this->data = new xlux::U32[wd * hgt];
+			memset(this->data, 0, wd * hgt * sizeof(xlux::U32));
 			if (!this->data)
 			{
-				klux::log::Error("Failed to allocate memory for graphics buffer");
+				xlux::log::Error("Failed to allocate memory for graphics buffer");
 				return;
 			}
 		}
@@ -55,12 +55,12 @@ struct Win32_GraphicsBuffer
 	}
 };
 
-static klux::Bool s_HasClosed = false;
+static xlux::Bool s_HasClosed = false;
 static HWND s_WindowHandle = NULL;
 static HINSTANCE s_ModuleHandle = NULL;
-static klux::RawPtr<Win32_GraphicsBuffer> s_FrontBuffer;
-static klux::RawPtr<Win32_GraphicsBuffer> s_BackBuffer;
-static klux::RawPtr<Window> s_Window = nullptr;
+static xlux::RawPtr<Win32_GraphicsBuffer> s_FrontBuffer;
+static xlux::RawPtr<Win32_GraphicsBuffer> s_BackBuffer;
+static xlux::RawPtr<Window> s_Window = nullptr;
 
 
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -92,10 +92,10 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		delete s_FrontBuffer;
 		delete s_BackBuffer;
 
-		s_FrontBuffer = klux::CreateRawPtr<Win32_GraphicsBuffer>( Window::GetWidth(), Window::GetHeight(), false);
-		s_BackBuffer = klux::CreateRawPtr<Win32_GraphicsBuffer>(Window::GetWidth(), Window::GetHeight(), false);
+		s_FrontBuffer = xlux::CreateRawPtr<Win32_GraphicsBuffer>( Window::GetWidth(), Window::GetHeight(), false);
+		s_BackBuffer = xlux::CreateRawPtr<Win32_GraphicsBuffer>(Window::GetWidth(), Window::GetHeight(), false);
 
-		klux::EventManager<WindowResize, klux::I32, klux::I32>::Get()->RaiseEvent( Window::GetWidth(), Window::GetHeight() );
+		xlux::EventManager<WindowResize, xlux::I32, xlux::I32>::Get()->RaiseEvent( Window::GetWidth(), Window::GetHeight() );
 
 		break;
 	}
@@ -106,7 +106,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 	}
 	case WM_CLOSE:
 	{
-		klux::EventManager<WindowClose>::Get()->RaiseEvent();
+		xlux::EventManager<WindowClose>::Get()->RaiseEvent();
 		s_HasClosed = true;
 		DestroyWindow(hwnd);
 		PostQuitMessage(0);
@@ -128,7 +128,7 @@ Window::Window(const std::string& title, int width, int height)
 
 	s_ModuleHandle = GetModuleHandle(NULL);
 
-	m_Framebuffer = klux::CreateRawPtr<WindowFramebuffer>();
+	m_Framebuffer = xlux::CreateRawPtr<WindowFramebuffer>();
 
 
 	WNDCLASSEX wincl = { 0 };
@@ -147,7 +147,7 @@ Window::Window(const std::string& title, int width, int height)
 
 	if (!RegisterClassEx(&wincl))
 	{
-		klux::log::Error("Failed to register window class");
+		xlux::log::Error("Failed to register window class");
 		return;
 	}
 
@@ -172,15 +172,15 @@ Window::Window(const std::string& title, int width, int height)
 	s_HasClosed = false;
 
 
-	s_FrontBuffer = klux::CreateRawPtr<Win32_GraphicsBuffer>(m_Width, m_Height, false);
-	s_BackBuffer = klux::CreateRawPtr<Win32_GraphicsBuffer>(m_Width, m_Height, true);
+	s_FrontBuffer = xlux::CreateRawPtr<Win32_GraphicsBuffer>(m_Width, m_Height, false);
+	s_BackBuffer = xlux::CreateRawPtr<Win32_GraphicsBuffer>(m_Width, m_Height, true);
 
 	s_Window = this;
 
 
 }
 
-klux::Bool Window::HasClosed()
+xlux::Bool Window::HasClosed()
 {
 	return s_HasClosed;
 }
@@ -199,11 +199,11 @@ void Window::Update()
 
 void Window::SwapBuffer()
 {
-	memcpy(s_FrontBuffer->data, s_BackBuffer->data, s_Instance->GetWidth() * s_Instance->GetHeight() * sizeof(klux::U32));
+	memcpy(s_FrontBuffer->data, s_BackBuffer->data, s_Instance->GetWidth() * s_Instance->GetHeight() * sizeof(xlux::U32));
 	InvalidateRect(s_WindowHandle, NULL, FALSE);
 }
 
-void Window::Clear(klux::F32 r, klux::F32 g, klux::F32 b, klux::F32 a)
+void Window::Clear(xlux::F32 r, xlux::F32 g, xlux::F32 b, xlux::F32 a)
 {
 	int wd = Window::GetWidth(), hgt = Window::GetHeight();
 	int pvr = (int)(r * 255.0f), pvg = (int)(g * 255.0f), pvb = (int)(b * 255.0f), pva = (int)(a * 255.0f);
@@ -211,7 +211,7 @@ void Window::Clear(klux::F32 r, klux::F32 g, klux::F32 b, klux::F32 a)
 	for (int i = 0; i < wd * hgt; ++i) s_BackBuffer->data[i] = pixel;
 }
 
-void Window::SetPixel(klux::F32 x, klux::F32 y, klux::F32 r, klux::F32 g, klux::F32 b, klux::F32 a)
+void Window::SetPixel(xlux::F32 x, xlux::F32 y, xlux::F32 r, xlux::F32 g, xlux::F32 b, xlux::F32 a)
 {
 	int wd = Window::GetWidth(), hgt = Window::GetHeight();
 	int px = (int)(x * (wd - 1)), py = (int)(y * (hgt - 1));
@@ -221,7 +221,7 @@ void Window::SetPixel(klux::F32 x, klux::F32 y, klux::F32 r, klux::F32 g, klux::
 	s_BackBuffer->data[index] = RGBA(pvr, pvg, pvb, pva);
 }
 
-void Window::SetTitle(const klux::String& title)
+void Window::SetTitle(const xlux::String& title)
 {
 	SetWindowText(s_WindowHandle, title.c_str());
 }

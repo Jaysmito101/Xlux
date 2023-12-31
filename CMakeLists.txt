@@ -16,7 +16,7 @@ if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.12.25835)
     set(CMAKE_CXX20_EXTENSION_COMPILE_OPTION "-std:c++latest")
 endif()
 
-project(Klux)
+project(Xlux)
 
-add_subdirectory(KluxEngine)
+add_subdirectory(XluxEngine)
 add_subdirectory(Sandbox)

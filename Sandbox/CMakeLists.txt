@@ -1,6 +1,6 @@
 include_directories(
     ./Include
-    ../KluxEngine/Include
+    ../XluxEngine/Include
 )
 
 if (MSVC)
@@ -9,23 +9,30 @@ else()
     add_compile_options(-Wall -Wextra -pedantic -Werror)
 endif()
 
+link_libraries(
+    xluxengine
+)
+
+add_compile_definitions(
+    XLUX_DLL_IMPORT
+)
+
+
 add_executable(sandbox
-    ./Source/Main.cpp
+    ./Source/Sandbox.cpp
     ./Source/Win32_Window.cpp
     ./Source/WindowFramebuffer.cpp
 )
 
-target_link_libraries(sandbox
-    PRIVATE kluxengine
-)
-
-target_compile_definitions(sandbox
-    PUBLIC KLUX_DLL_IMPORT
+add_executable(01_hellotriangle
+    ./Source/01_HelloTriangle.cpp
+    ./Source/Win32_Window.cpp
+    ./Source/WindowFramebuffer.cpp
 )
 
 if (WIN32)
-    target_compile_definitions(sandbox
-        PUBLIC _CRT_SECURE_NO_WARNINGS
+    add_compile_definitions(
+        _CRT_SECURE_NO_WARNINGS
     )
 endif()
 
