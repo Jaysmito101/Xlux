@@ -78,11 +78,13 @@ namespace xlux
 				for (auto i = 0; i < 3; ++i)
 				{
 					auto& position = triangle.GetBuiltInRef(i)->Position;
+					//position = position / position[3];
 					position = position * 0.5f + math::Vec4(0.5f);
 
 					position[0] = position[0] * m_Framebuffer->GetWidth();
 					position[1] = position[1] * m_Framebuffer->GetHeight();
 					position[3] = 1.0f;
+
 				}
 				m_Rasterizer(triangle);
 			}

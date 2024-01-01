@@ -58,7 +58,7 @@ namespace xlux
 		EBlendFunction srcBlendFunction = BlendFunction_SrcAlpha;
 		EBlendFunction dstBlendFunction = BlendFunction_OneMinusSrcAlpha;
 
-		ECompareFunction depthCompareFunction = CompareFunction_LessEqual;
+		ECompareFunction depthCompareFunction = CompareFunction_Less;
 
 		Bool cullFaceEnable = false;
 		Bool depthTestEnable = false;

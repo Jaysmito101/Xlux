@@ -35,7 +35,7 @@ namespace xlux
 	private:
 		Bool PointInTriangle(const math::Vec2& p, const math::Vec4& p0, const math::Vec4& p1, const math::Vec4& p2);
 		math::Vec3 CalculateBarycentric(const math::Vec2& p, const math::Vec4& a, const math::Vec4& b, const math::Vec4& c);
-		void BlendAndApplyDepth(U32 px, U32 py, RawPtr<IFramebuffer> fbo, F32 depth);
+		Bool BlendAndApplyDepth(U32 px, U32 py, RawPtr<IFramebuffer> fbo, F32 depth);
 		void BlendAndApplyColor(U32 px, U32 py, RawPtr<IFramebuffer> fbo, const FragmentShaderOutput& output);
 		F32 CalculateBlendFactor(F32 srcAlpha, F32 dstAlpha, EBlendFunction blendFunction);
 

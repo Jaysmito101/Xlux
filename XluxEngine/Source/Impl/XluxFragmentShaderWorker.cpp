@@ -88,13 +88,15 @@ namespace xlux
 					interpolator->ScaleAndAdd(fragmentInterpolatedInput, vertexData[1], baycentric[1]);
 					interpolator->ScaleAndAdd(fragmentInterpolatedInput, vertexData[2], baycentric[2]);
 
-					fragmentShaderOutput.Depth = p0[3] * baycentric[0] + p1[3] * baycentric[1] + p2[3] * baycentric[2];
+					fragmentShaderOutput.Depth = p0[2] * baycentric[0] + p1[2] * baycentric[1] + p2[2] * baycentric[2];
 					m_Pipeline->m_CreateInfo.fragmentShader->Execute(fragmentInterpolatedInput, &fragmentShaderOutput);
 
 					auto px = x, py = framebuffer->GetHeight() - 1 - y;
 
-					BlendAndApplyDepth(px, py, framebuffer, fragmentShaderOutput.Depth);
-					BlendAndApplyColor(px, py, framebuffer, fragmentShaderOutput);
+					if (BlendAndApplyDepth(px, py, framebuffer, fragmentShaderOutput.Depth))
+					{
+						BlendAndApplyColor(px, py, framebuffer, fragmentShaderOutput);
+					}
 
 				}
 			}
@@ -103,75 +105,80 @@ namespace xlux
 		return false;
 	}
 
-	void FragmentShaderWorker::BlendAndApplyDepth(U32 px, U32 py, RawPtr<IFramebuffer> framebuffer, F32 depth)
+	Bool FragmentShaderWorker::BlendAndApplyDepth(U32 px, U32 py, RawPtr<IFramebuffer> framebuffer, F32 depth)
 	{
-		if (!m_Pipeline->m_CreateInfo.depthTestEnable) return;
-		if (!framebuffer->HasDepthAttachment()) return;
+		if (!m_Pipeline->m_CreateInfo.depthTestEnable) return true;
+		if (!framebuffer->HasDepthAttachment()) return true;
+
+
 
 		F32 currentDepth = 0.0f;
 		framebuffer->GetDepthPixel(px, py, currentDepth);
+
+		Bool testResult = false;
 
 		switch (m_Pipeline->m_CreateInfo.depthCompareFunction)
 		{
 		case CompareFunction_Never:
 		{
-			// Never passes
+			testResult = false;
+			break;
 		}
 		case CompareFunction_Less:
 		{
 			// Passes if the incoming depth value is less than the stored depth value.
-			if (depth >= currentDepth) return;
+			testResult = (depth < currentDepth);
+			break;
 		}
 		case CompareFunction_Equal:
 		{
 			// Passes if the incoming depth value is equal to the stored depth value.
-			if (depth != currentDepth) return;
+			testResult = (depth == currentDepth);
+			break;
 		}
 		case CompareFunction_LessEqual:
 		{
 			// Passes if the incoming depth value is less than or equal to the stored depth value.
-			if (depth > currentDepth) return;
+			testResult = (depth <= currentDepth);
+			break;
 		}
 		case CompareFunction_Greater:
 		{
 			// Passes if the incoming depth value is greater than the stored depth value.
-			if (depth <= currentDepth) return;
+			testResult = (depth > currentDepth);
+			break;
 		}
 		case CompareFunction_NotEqual:
 		{
 			// Passes if the incoming depth value is not equal to the stored depth value.
-			if (depth == currentDepth) return;
+			testResult = (depth != currentDepth);
+			break;
 		}
 		case CompareFunction_GreaterEqual:
 		{
 			// Passes if the incoming depth value is greater than or equal to the stored depth value.
-			if (depth < currentDepth) return;
+			testResult = (depth >= currentDepth);
+			break;
 		}
 		case CompareFunction_Always:
 		{
-			// Always passes.
+			testResult = true;
 			break;
 		}
 		default:
 		{
+			testResult = false;
 			break;
 		}
 		}
-		framebuffer->SetDepthPixel(px, py, depth);
+		if (testResult) framebuffer->SetDepthPixel(px, py, depth);
+		return testResult;
 	}
 
 	void FragmentShaderWorker::BlendAndApplyColor(U32 px, U32 py, RawPtr<IFramebuffer> framebuffer, const FragmentShaderOutput& output)
 	{
 		math::Vec4 dstColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 		math::Vec4 blendedColor = { 1.0f, 1.0f, 1.0f, 1.0f };
-
-		if (m_Pipeline->m_CreateInfo.depthTestEnable && framebuffer->HasDepthAttachment())
-		{
-			F32 currentDepth = 0.0f;
-			framebuffer->GetDepthPixel(px, py, currentDepth);
-			if (output.Depth >= currentDepth) return;
-		}
-
 
 		for (U32 i = 0; i < std::min(framebuffer->GetColorAttachmentCount(), 4u); ++i)
 		{

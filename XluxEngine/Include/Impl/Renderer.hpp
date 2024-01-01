@@ -43,16 +43,18 @@ namespace xlux
 		std::optional<Viewport> m_ActiveViewport;
 
 
-		RawPtr<ThreadPool<8, FrameClearWorkerInput, U32>> m_FrameClearThreadPool;
-		RawPtr<IJob<FrameClearWorkerInput, U32>> m_FrameClearJob;
-
-		RawPtr<ThreadPool<8, VertexShaderWorkerInput, U32>> m_VertexShaderThreadPool;
-		RawPtr<IJob<VertexShaderWorkerInput, U32>> m_VertexShaderJob;
-
 		static constexpr U32 k_FragmentShaderWorkerCountX = 8;
 		static constexpr U32 k_FragmentShaderWorkerCountY = 6;
+		static constexpr U32 k_VertexShaderWorkerCount = 8;
+		static constexpr U32 k_FrameClearWorkerCount = 8;
 		U32 m_FragmentShaderTileWidth = 0;
 		U32 m_FragmentShaderTileHeight = 0;
+
+		RawPtr<ThreadPool<k_FrameClearWorkerCount, FrameClearWorkerInput, U32>> m_FrameClearThreadPool;
+		RawPtr<IJob<FrameClearWorkerInput, U32>> m_FrameClearJob;
+
+		RawPtr<ThreadPool<k_VertexShaderWorkerCount, VertexShaderWorkerInput, U32>> m_VertexShaderThreadPool;
+		RawPtr<IJob<VertexShaderWorkerInput, U32>> m_VertexShaderJob;
 
 		RawPtr<ThreadPool<k_FragmentShaderWorkerCountX * k_FragmentShaderWorkerCountY, FragmentShaderWorkerInput, U32>> m_FragmentShaderThreadPool;
 		RawPtr<IJob<FragmentShaderWorkerInput, U32>> m_FragmentShaderJob;

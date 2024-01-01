@@ -19,11 +19,6 @@ void WindowFramebuffer::SetColorPixel(xlux::I32 channel, xlux::I32 x, xlux::I32 
 	);
 }
 
-void WindowFramebuffer::SetDepthPixel(xlux::I32 x, xlux::I32 y, xlux::F32 depth)
-{
-	(void)x, (void)y, (void)depth;
-	return;
-}
 
 
 void WindowFramebuffer::GetColorPixel(xlux::I32 channel, xlux::I32 x, xlux::I32 y, xlux::F32& r, xlux::F32& g, xlux::F32& b, xlux::F32& a) const
@@ -39,8 +34,15 @@ void WindowFramebuffer::GetColorPixel(xlux::I32 channel, xlux::I32 x, xlux::I32 
 	a = 1.0f;
 }
 
+static xlux::F32 s_DepthBuffer[4096][4096] = { 0.0f };
+
 void WindowFramebuffer::GetDepthPixel(xlux::I32 x, xlux::I32 y, xlux::F32& depth) const
 {
-	(void)x, (void)y;
-	depth = 0.0f;
+	depth = s_DepthBuffer[x][y];
+}
+
+
+void WindowFramebuffer::SetDepthPixel(xlux::I32 x, xlux::I32 y, xlux::F32 depth)
+{
+	s_DepthBuffer[x][y] = depth;
 }

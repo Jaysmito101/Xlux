@@ -56,20 +56,31 @@ namespace xlux
 			template <Size M, VectorValueType... Args>
 			XLUX_FORCE_INLINE Vec(const Vec<M>& other, Args... args)
 			{
-				if constexpr ((M + sizeof...(args)) < N) {
-					throw std::logic_error("Invalid number of arguments");
-				}
-				else
+				//if constexpr ((M + sizeof...(args)) < N) {
+					//throw std::logic_error("Invalid number of arguments");
+				//}
+				//else
 				{
 					if constexpr (sizeof...(args) == 0)
 					{
 						std::memcpy(m_Data, other.m_Data, sizeof(other.m_Data));
+					}
+					else if constexpr ((M + sizeof...(args)) >= N)
+					{
+						std::memcpy(m_Data, other.m_Data, std::clamp(M, Size(0), N) * sizeof(ValueTypeT));
+						ValueTypeT data[] = { args... };
+						std::memcpy(m_Data + M, data, sizeof(data));
 					}
 					else
 					{
 						std::memcpy(m_Data, other.m_Data, std::clamp(M, Size(0), N) * sizeof(ValueTypeT));
 						ValueTypeT data[] = { args... };
 						std::memcpy(m_Data + M, data, sizeof(data));
+
+						for (Size i = M + sizeof...(args); i < N; ++i)
+						{
+							m_Data[i] = ValueTypeT();
+						}
 					}
 				}
 			}

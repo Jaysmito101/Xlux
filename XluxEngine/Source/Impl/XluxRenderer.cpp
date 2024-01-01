@@ -12,10 +12,10 @@ namespace xlux
 	Renderer::Renderer()
 	{
 		m_FrameClearJob = CreateRawPtr<FrameClearWorker>();
-		m_FrameClearThreadPool = CreateRawPtr<ThreadPool<8, FrameClearWorkerInput, U32>>(m_FrameClearJob);
+		m_FrameClearThreadPool = CreateRawPtr<ThreadPool<k_FrameClearWorkerCount, FrameClearWorkerInput, U32>>(m_FrameClearJob);
 
 		m_VertexShaderJob = CreateRawPtr<VertexShaderWorker>();
-		m_VertexShaderThreadPool = CreateRawPtr<ThreadPool<8, VertexShaderWorkerInput, U32>>(m_VertexShaderJob);
+		m_VertexShaderThreadPool = CreateRawPtr<ThreadPool<k_VertexShaderWorkerCount, VertexShaderWorkerInput, U32>>(m_VertexShaderJob);
 
 		m_FragmentShaderJob = CreateRawPtr<FragmentShaderWorker>();
 		m_FragmentShaderThreadPool = CreateRawPtr<ThreadPool<k_FragmentShaderWorkerCountX * k_FragmentShaderWorkerCountY, FragmentShaderWorkerInput, U32>>(m_FragmentShaderJob);

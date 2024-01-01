@@ -42,6 +42,12 @@ add_executable(03_transforms
 	./Source/WindowFramebuffer.cpp
 )
 
+add_executable(04_going3d
+	./Source/04_Going3D.cpp
+	./Source/Win32_Window.cpp
+	./Source/WindowFramebuffer.cpp
+)
+
 if (WIN32)
     add_compile_definitions(
         _CRT_SECURE_NO_WARNINGS

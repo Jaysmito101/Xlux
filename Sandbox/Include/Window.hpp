@@ -46,7 +46,7 @@ public:
 	~WindowFramebuffer() = default;
 
 	virtual xlux::U32 GetColorAttachmentCount() const override { return 1; }
-	virtual xlux::Bool HasDepthAttachment() const override { return false; }
+	virtual xlux::Bool HasDepthAttachment() const override { return true; }
 	virtual xlux::Pair<xlux::U32, xlux::U32> GetSize() const override;
 	virtual void SetColorPixel(xlux::I32 channel, xlux::I32 x, xlux::I32 y, xlux::F32 r, xlux::F32 g, xlux::F32 b, xlux::F32 a) override;
 	virtual void SetDepthPixel(xlux::I32 x, xlux::I32 y, xlux::F32 depth) override;
