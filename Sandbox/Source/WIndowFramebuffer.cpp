@@ -12,6 +12,11 @@ void WindowFramebuffer::SetColorPixel(xlux::I32 channel, xlux::I32 x, xlux::I32 
 		xlux::log::Error("Invalid channel for Window Framebuffer");
 	}
 
+	r = std::clamp(r, 0.0f, 0.999f);
+	g = std::clamp(g, 0.0f, 0.999f);
+	b = std::clamp(b, 0.0f, 0.999f);
+	a = std::clamp(a, 0.0f, 0.999f);
+
 	Window::SetPixel(
 		(xlux::F32)x / (xlux::F32)Window::GetWidth(),
 		(xlux::F32)y / (xlux::F32)Window::GetHeight(),

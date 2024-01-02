@@ -216,7 +216,7 @@ namespace xlux
 		}
 		else
 		{
-			log::Error("Invalid Triangle");
+			// all points are outside so no triangle is generated
 		}
 
 		return result;

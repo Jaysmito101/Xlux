@@ -297,14 +297,14 @@ namespace xlux
 
 			static Mat4x4 LookAt(const Vec<3, ValueType>& eye, const Vec<3, ValueType>& center, const Vec<3, ValueType>& up)
 			{
-				Vec<3, ValueType> f = (center - eye).Normalized();
-				Vec<3, ValueType> s = f.Cross(up).Normalized();
-				Vec<3, ValueType> u = s.Cross(f);
+				Vec<3, ValueType> z = (eye - center).Normalized();
+				Vec<3, ValueType> x = up.Cross(z).Normalized();
+				Vec<3, ValueType> y = z.Cross(x).Normalized();
 
 				return Mat4x4(
-					s[0], s[1], s[2], -s.Dot(eye),
-					u[0], u[1], u[2], -u.Dot(eye),
-					-f[0], -f[1], -f[2], f.Dot(eye),
+					x[0], x[1], x[2], -x.Dot(eye),
+					y[0], y[1], y[2], -y.Dot(eye),
+					z[0], z[1], z[2], -z.Dot(eye),
 					0.0f, 0.0f, 0.0f, 1.0f);
 			}
 
@@ -315,8 +315,8 @@ namespace xlux
 				return Mat4x4(
 					1.0f / (aspect * tanHalfFov), 0.0f, 0.0f, 0.0f,
 					0.0f, 1.0f / tanHalfFov, 0.0f, 0.0f,
-					0.0f, 0.0f, (-zNear - zFar) / zRange, 2.0f * zFar * zNear / zRange,
-					0.0f, 0.0f, 1.0f, 0.0f);
+					0.0f, 0.0f, -(-zNear - zFar) / zRange, 2.0f * zFar * zNear / zRange,
+					0.0f, 0.0f, -1.0f, 0.0f);
 			}
 
 			static Mat4x4 Orthographics(F32 left, F32 right, F32 bottom, F32 top, F32 zNear, F32 zFar)

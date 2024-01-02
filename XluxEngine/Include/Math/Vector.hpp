@@ -63,7 +63,7 @@ namespace xlux
 				{
 					if constexpr (sizeof...(args) == 0)
 					{
-						std::memcpy(m_Data, other.m_Data, sizeof(other.m_Data));
+						std::memcpy(m_Data, other.m_Data, std::clamp(M, Size(0), N) * sizeof(ValueTypeT));
 					}
 					else if constexpr ((M + sizeof...(args)) >= N)
 					{
@@ -259,6 +259,17 @@ namespace xlux
 				return true;
 			}
 
+			XLUX_FORCE_INLINE Vec<N, ValueTypeT> operator-() const
+			{
+				Vec<N, ValueTypeT> result;
+				for (Size i = 0; i < N; ++i)
+				{
+					result[i] = -m_Data[i];
+				}
+				return result;
+			}
+
+
 			XLUX_FORCE_INLINE bool operator!=(const Vec<N, ValueTypeT>& other) const
 			{
 				return !(*this == other);
@@ -294,14 +305,32 @@ namespace xlux
 				return result;
 			}
 
+			XLUX_FORCE_INLINE Vec<N, ValueTypeT> Pow(F32 power) const
+			{
+				Vec<N, ValueTypeT> result;
+				for (Size i = 0; i < N; ++i)
+				{
+					result[i] = std::pow(m_Data[i], power);
+				}
+				return result;
+			}
+
 			XLUX_FORCE_INLINE Vec<N, ValueTypeT> Cross(const Vec<N, ValueTypeT>& other) const
 			{
-				static_assert(N == 3, "Cross product is only defined for 3D vectors");
-				return Vec<N, ValueTypeT>(
-					m_Data[1] * other[2] - m_Data[2] * other[1],
-					m_Data[2] * other[0] - m_Data[0] * other[2],
-					m_Data[0] * other[1] - m_Data[1] * other[0]
-				);
+				static_assert(N == 3 || N == 2, "Cross product is only defined for 3D vectors");
+				if constexpr (N == 2)
+				{
+					F32 result = m_Data[0] * other[1] - m_Data[1] * other[0];
+					return Vec<2, ValueTypeT>(result, 0.0f);
+				}
+				else if constexpr (N == 3)
+				{
+					return Vec<3, ValueTypeT>(
+						m_Data[1] * other[2] - m_Data[2] * other[1],
+						m_Data[2] * other[0] - m_Data[0] * other[2],
+						m_Data[0] * other[1] - m_Data[1] * other[0]
+					);
+				}
 			}
 
 			XLUX_FORCE_INLINE Vec<N, ValueTypeT> Normalized() const

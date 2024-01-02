@@ -48,6 +48,12 @@ add_executable(04_going3d
 	./Source/WindowFramebuffer.cpp
 )
 
+add_executable(05_modelloading
+	./Source/05_ModelLoading.cpp
+	./Source/Win32_Window.cpp
+	./Source/WindowFramebuffer.cpp
+)
+
 if (WIN32)
     add_compile_definitions(
         _CRT_SECURE_NO_WARNINGS

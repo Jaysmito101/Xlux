@@ -9,26 +9,23 @@
 
 namespace xlux
 {
+	// follows top-left rule
 	Bool FragmentShaderWorker::PointInTriangle(const math::Vec2& p, const math::Vec4& p0, const math::Vec4& p1, const math::Vec4& p2)
 	{
-		// Compute vectors        
-		math::Vec2 v0 = { p2[0] - p0[0], p2[1] - p0[1] };
-		math::Vec2 v1 = { p1[0] - p0[0], p1[1] - p0[1] };
-		math::Vec2 v2 = { p[0] - p0[0], p[1] - p0[1] };
-		// Compute dot products
-		F32 dot00 = v0.Dot(v0);
-		F32 dot01 = v0.Dot(v1);
-		F32 dot02 = v0.Dot(v2);
-		F32 dot11 = v1.Dot(v1);
-		F32 dot12 = v1.Dot(v2);
+		const auto BAIS = 2.025f;
 
-		// Compute barycentric coordinates
-		F32 invDenom = 1.0f / (dot00 * dot11 - dot01 * dot01);
-		F32 u = (dot11 * dot02 - dot01 * dot12) * invDenom;
-		F32 v = (dot00 * dot12 - dot01 * dot02) * invDenom;
-		// Check if point is in triangle
-		return (u >= 0.0f) && (v >= 0.0f) && (u + v < 1.0f);
-
+        const auto v0 = math::Vec2(p2[0] - p0[0], p2[1] - p0[1]);
+		const auto v1 = math::Vec2(p1[0] - p0[0], p1[1] - p0[1]);
+		const auto v2 = math::Vec2(p[0] - p0[0], p[1] - p0[1]);
+		const auto dot00 = v0.Dot(v0);
+		const auto dot01 = v0.Dot(v1);
+		const auto dot02 = v0.Dot(v2);
+		const auto dot11 = v1.Dot(v1);
+		const auto dot12 = v1.Dot(v2);
+		const auto invDenom = 1.0f / (dot00 * dot11 - dot01 * dot01);
+		const auto u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+		const auto v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+		return (u > -BAIS && v > -BAIS && u + v < 1.0f + BAIS);
 	}
 
 	math::Vec3 FragmentShaderWorker::CalculateBarycentric(const math::Vec2& p, const math::Vec4& a, const math::Vec4& b, const math::Vec4& c)
@@ -69,16 +66,17 @@ namespace xlux
 		FragmentShaderOutput fragmentShaderOutput = {};
 		U8 fragmentInterpolatedInput[1024];
 
+		auto& p0 = payload.triangle.GetBuiltInRef(0)->Position;
+		auto& p1 = payload.triangle.GetBuiltInRef(1)->Position;
+		auto& p2 = payload.triangle.GetBuiltInRef(2)->Position;
+		auto vertexData = payload.triangle.GetVertexData();
+
 		for (U32 y = payload.startY; y < payload.startY + payload.height; ++y)
 		{
 			for (U32 x = payload.startX; x < payload.startX + payload.width; ++x)
 			{
 				// klux::log::Info("FragmentShaderWorker::Execute({},{})", x, y);
 				auto p = math::Vec2((F32)x, (F32)y);
-				auto& p0 = payload.triangle.GetBuiltInRef(0)->Position;
-				auto& p1 = payload.triangle.GetBuiltInRef(1)->Position;
-				auto& p2 = payload.triangle.GetBuiltInRef(2)->Position;
-				auto vertexData = payload.triangle.GetVertexData();
 				if (PointInTriangle(p, p0, p1, p2))
 				{
 					auto baycentric = CalculateBarycentric(p, p0, p1, p2);
