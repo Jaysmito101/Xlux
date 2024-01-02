@@ -68,6 +68,10 @@ The examples for this has been made similar to https://learnopengl.com/
 
 <img width=500 src="./Images/04_going3d.png" alt="Going 3D" />
 
+### Model Loading [source](./Sandbox/Source/05_ModelLoading.cpp)
+
+<img width=500 src="./Images/05_modelloading.png" alt="Model Loading" />
+
 More comming soon...
 
 
