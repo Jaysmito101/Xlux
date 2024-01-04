@@ -203,6 +203,7 @@ namespace xlux
 		}
 
 
+
 		m_VertexShaderThreadPool->WaitJobDone();
 		m_FragmentShaderThreadPool->WaitJobDone();
 	}
@@ -211,6 +212,8 @@ namespace xlux
 	Bool Renderer::PassTriangleToFragmentShader(ShaderTriangleRef triangle)
 	{
 		auto boundingBox = triangle.GetBoundingBox(); // (xmin, ymin, xmax, ymax)
+		// boundingBox *= math::Vec4(static_cast<F32>(m_ActiveFramebuffer->GetWidth()), static_cast<F32>(m_ActiveFramebuffer->GetHeight()), static_cast<F32>(m_ActiveFramebuffer->GetWidth()), static_cast<F32>(m_ActiveFramebuffer->GetHeight()));
+
 		auto fragmentShaderJob = reinterpret_cast<RawPtr<FragmentShaderWorker>>(m_FragmentShaderJob);
 
 		fragmentShaderJob->SetFramebuffer(m_ActiveFramebuffer);
@@ -218,6 +221,7 @@ namespace xlux
 		
 		FragmentShaderWorkerInput input = {};
 		input.triangle = triangle;
+
 
 		for (auto y = 0; y < k_FragmentShaderWorkerCountY; ++y)
 		{

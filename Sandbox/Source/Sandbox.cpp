@@ -196,6 +196,9 @@ int main()
 
 	fragmentShader->texture = texture;
 
+	const xlux::F32 dist = 220.0f;
+	
+
 	while (!Window::HasClosed())
 	{
 		currTime = xlux::utils::GetTime();
@@ -203,10 +206,9 @@ int main()
 		prevTime = currTime;
 
 		Window::SetTitle("Xlux Engine [Model Loading] - Jaysmito Mukherjee - FPS: " + std::to_string(1.0f / deltaTime));
-		const xlux::F32 dist = 220.0f;
-		view = xlux::math::Mat4x4::LookAt(xlux::math::Vec3(dist * cos(currTime * 0.5f), 12.0f, dist * sin(currTime * 0.5f)), xlux::math::Vec3(0.0f, 0.0f, 0.0f), xlux::math::Vec3(0.0f, 1.0f, 0.0f));
-		proj = xlux::math::Mat4x4::Perspective(xlux::math::ToRadians(66.0f), (float)framebuffer->GetWidth() / (float)framebuffer->GetHeight(), 0.1f, 10000.0f);
 		// vertexShader->model = xlux::math::Mat4x4::RotateY(currTime * 0.5f);
+		view = xlux::math::Mat4x4::LookAt(xlux::math::Vec3(dist * cos(currTime * 0.2f), 12.0f, dist * sin(currTime * 0.2f)), xlux::math::Vec3(0.0f, 0.0f, 0.0f), xlux::math::Vec3(0.0f, 1.0f, 0.0f));
+		proj = xlux::math::Mat4x4::Perspective(xlux::math::ToRadians(66.0f), (float)framebuffer->GetWidth() / (float)framebuffer->GetHeight(), 0.1f, 10000.0f);
 		vertexShader->viewProj = proj.Mul(view);
 
 		renderer->BeginFrame();

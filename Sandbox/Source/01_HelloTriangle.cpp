@@ -113,7 +113,6 @@ int main()
 
 		Window::SetTitle("Xlux Engine [Hello Triangle] - Jaysmito Mukherjee - FPS: " + std::to_string(1.0f / deltaTime));
 
-		xlux::log::Info("FRAME----------------------");
 		renderer->BeginFrame();
 		renderer->BindFramebuffer(framebuffer);
 		renderer->SetViewport(0, 0, framebuffer->GetWidth(), framebuffer->GetHeight());

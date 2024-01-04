@@ -9,23 +9,22 @@
 
 namespace xlux
 {
+
 	// follows top-left rule
 	Bool FragmentShaderWorker::PointInTriangle(const math::Vec2& p, const math::Vec4& p0, const math::Vec4& p1, const math::Vec4& p2)
 	{
-		const auto BAIS = 0.525f;
+		const auto p0o = math::Vec2(p0[0], p0[1]);
+		const auto p1o = math::Vec2(p1[0], p1[1]);
+		const auto p2o = math::Vec2(p2[0], p2[1]);
+		const auto po = math::Vec2(p[0], p[1]);
 
-        const auto v0 = math::Vec2(p2[0] - p0[0], p2[1] - p0[1]);
-		const auto v1 = math::Vec2(p1[0] - p0[0], p1[1] - p0[1]);
-		const auto v2 = math::Vec2(p[0] - p0[0], p[1] - p0[1]);
-		const auto dot00 = v0.Dot(v0);
-		const auto dot01 = v0.Dot(v1);
-		const auto dot02 = v0.Dot(v2);
-		const auto dot11 = v1.Dot(v1);
-		const auto dot12 = v1.Dot(v2);
-		const auto invDenom = 1.0f / (dot00 * dot11 - dot01 * dot01);
-		const auto u = (dot11 * dot02 - dot01 * dot12) * invDenom;
-		const auto v = (dot00 * dot12 - dot01 * dot02) * invDenom;
-		return (u > -BAIS && v > -BAIS && u + v < 1.0f + BAIS);
+
+        const auto d1 = (p1o[0] - p0o[0]) * (po[1] - p0o[1]) - (po[0] - p0o[0]) * (p1o[1] - p0o[1]);
+		const auto d2 = (p2o[0] - p1o[0]) * (po[1] - p1o[1]) - (po[0] - p1o[0]) * (p2o[1] - p1o[1]);
+		const auto d3 = (p0o[0] - p2o[0]) * (po[1] - p2o[1]) - (po[0] - p2o[0]) * (p0o[1] - p2o[1]);
+
+		const auto BIAS = 0.00000f;
+		return ((d1 > -BIAS) && (d2 > -BIAS) && (d3 > -BIAS));// || ((d1 < BIAS) && (d2 < BIAS) && (d3 < BIAS));
 	}
 
 	math::Vec3 FragmentShaderWorker::CalculateBarycentric(const math::Vec2& p, const math::Vec4& a, const math::Vec4& b, const math::Vec4& c)
@@ -53,14 +52,14 @@ namespace xlux
 		// payload.triangle.Log();
 
 		auto boundingBox = payload.triangle.GetBoundingBox();
-
-		const auto startX = std::max(payload.startX, static_cast<U32>(boundingBox[0]));
-		const auto startY = std::max(payload.startY, static_cast<U32>(boundingBox[1]));
-		const auto endX = std::min (payload.startX + payload.width, static_cast<U32>(boundingBox[2]));
-		const auto endY = std::min (payload.startY + payload.height, static_cast<U32>(boundingBox[3]));
+		// boundingBox *= math::Vec4(static_cast<F32>(m_Framebuffer->GetWidth()), static_cast<F32>(m_Framebuffer->GetHeight()), static_cast<F32>(m_Framebuffer->GetWidth()), static_cast<F32>(m_Framebuffer->GetHeight()));
+		
+		const auto startX = std::max(payload.startX, static_cast<U32>(boundingBox[0]) - 1);
+		const auto startY = std::max(payload.startY, static_cast<U32>(boundingBox[1]) - 1);
+		const auto endX = std::min (payload.startX + payload.width, static_cast<U32>(boundingBox[2]) + 1);
+		const auto endY = std::min (payload.startY + payload.height, static_cast<U32>(boundingBox[3]) + 1);
 
 		auto interpolator = m_Pipeline->m_CreateInfo.interpolator;
-
 		auto framebuffer = m_Framebuffer;
 
 		FragmentShaderOutput fragmentShaderOutput = {};
@@ -76,6 +75,7 @@ namespace xlux
 			for (U32 x = startX; x < endX; ++x)
 			{
 				auto p = math::Vec2((F32)x, (F32)y);
+				// auto p = math::Vec2((F32)x / framebuffer->GetWidth(), (F32)y / framebuffer->GetHeight());
 				if (PointInTriangle(p, p0, p1, p2))
 				{
 					auto baycentric = CalculateBarycentric(p, p0, p1, p2);

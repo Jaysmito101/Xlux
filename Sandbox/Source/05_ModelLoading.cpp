@@ -98,12 +98,13 @@ int main()
 		.SetInterpolator(interpolator)
 		.SetDepthTestEnable(true)
 		.SetClippingEnable(true)
+		.SetBackfaceCullingEnable(true)
 		.SetDepthCompareFunction(xlux::CompareFunction_Less)
 		.SetVertexItemSize(sizeof(VertexInData))
 		.SetVertexToFragmentDataSize(sizeof(VertexOutData));
 
 	auto pipeline = device->CreatePipeline(createInfo);
-	
+
 	// Vectices for a cube with vertex Normals (all 36 vertices)
 	std::vector<VertexInData> vertices = {};
 	std::vector<xlux::U32> indices = {};
@@ -149,13 +150,13 @@ int main()
 				attrib.normals[3 * index.normal_index + 1],
 				attrib.normals[3 * index.normal_index + 2]
 			);
-			
+
 			vertices.push_back(vertex);
 			indices.push_back(v_index_offset + v);
 		}
 		v_index_offset += face;
-	}	
-	
+	}
+
 
 	xlux::log::Info("Vertices: {}", vertices.size());
 	xlux::log::Info("Indices: {}", indices.size());
@@ -166,7 +167,7 @@ int main()
 	xlux::I32 tWidth = 0, tHeight = 0, tChannels = 0;
 	auto textureData = stbi_loadf((xlux::utils::GetExecutableDirectory() + "/texture.png").c_str(), &tWidth, &tHeight, &tChannels, 3);
 	auto texture = device->CreateTexture2D(tWidth, tHeight, xlux::TexelFormat_RGB);
-	
+
 
 	auto totalSize = sizeof(VertexInData) * vertices.size() + sizeof(xlux::U32) * indices.size() + texture->GetSizeInBytes();
 	auto deviceMemory = device->AllocateMemory(totalSize);
@@ -195,6 +196,9 @@ int main()
 
 	fragmentShader->texture = texture;
 
+	const xlux::F32 dist = 220.0f;
+
+
 	while (!Window::HasClosed())
 	{
 		currTime = xlux::utils::GetTime();
@@ -202,10 +206,9 @@ int main()
 		prevTime = currTime;
 
 		Window::SetTitle("Xlux Engine [Model Loading] - Jaysmito Mukherjee - FPS: " + std::to_string(1.0f / deltaTime));
-		const xlux::F32 dist = 220.0f;
-		view = xlux::math::Mat4x4::LookAt(xlux::math::Vec3(dist * cos(currTime * 0.5f), 12.0f, dist * sin(currTime * 0.5f)), xlux::math::Vec3(0.0f, 0.0f, 0.0f), xlux::math::Vec3(0.0f, 1.0f, 0.0f));
-		proj = xlux::math::Mat4x4::Perspective(xlux::math::ToRadians(66.0f), (float)framebuffer->GetWidth() / (float)framebuffer->GetHeight(), 0.1f, 10000.0f);
 		// vertexShader->model = xlux::math::Mat4x4::RotateY(currTime * 0.5f);
+		view = xlux::math::Mat4x4::LookAt(xlux::math::Vec3(dist * cos(currTime * 0.2f), 12.0f, dist * sin(currTime * 0.2f)), xlux::math::Vec3(0.0f, 0.0f, 0.0f), xlux::math::Vec3(0.0f, 1.0f, 0.0f));
+		proj = xlux::math::Mat4x4::Perspective(xlux::math::ToRadians(66.0f), (float)framebuffer->GetWidth() / (float)framebuffer->GetHeight(), 0.1f, 10000.0f);
 		vertexShader->viewProj = proj.Mul(view);
 
 		renderer->BeginFrame();
