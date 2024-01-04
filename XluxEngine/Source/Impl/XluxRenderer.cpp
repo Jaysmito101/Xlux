@@ -203,7 +203,6 @@ namespace xlux
 		}
 
 
-
 		m_VertexShaderThreadPool->WaitJobDone();
 		m_FragmentShaderThreadPool->WaitJobDone();
 	}

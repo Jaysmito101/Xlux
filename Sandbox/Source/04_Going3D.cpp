@@ -64,7 +64,7 @@ public:
 	{
 		(void)builtIn; // unused
 		const auto lightPos = xlux::math::Vec3(0.0f, 1.0f, 0.0f);
-		const auto lightColor = xlux::math::Vec3(1.0f, 1.0f, 1.0f);
+		const auto lightColor = xlux::math::Vec4(1.0f, 1.0f, 1.0f, 1.0f);
 		const auto lightDir = (lightPos - dataIn->position).Normalized();
 		const auto lightIntensity = std::max(0.0f, lightDir.Dot(dataIn->normal * -1.0f));
 		dataOut->Color[0] = texture->Sample(dataIn->texCoord) * lightIntensity * lightColor;

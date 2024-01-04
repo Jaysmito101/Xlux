@@ -12,7 +12,7 @@ namespace xlux
 	// follows top-left rule
 	Bool FragmentShaderWorker::PointInTriangle(const math::Vec2& p, const math::Vec4& p0, const math::Vec4& p1, const math::Vec4& p2)
 	{
-		const auto BAIS = 1.025f;
+		const auto BAIS = 0.525f;
 
         const auto v0 = math::Vec2(p2[0] - p0[0], p2[1] - p0[1]);
 		const auto v1 = math::Vec2(p1[0] - p0[0], p1[1] - p0[1]);
@@ -75,7 +75,6 @@ namespace xlux
 		{
 			for (U32 x = startX; x < endX; ++x)
 			{
-				// klux::log::Info("FragmentShaderWorker::Execute({},{})", x, y);
 				auto p = math::Vec2((F32)x, (F32)y);
 				if (PointInTriangle(p, p0, p1, p2))
 				{

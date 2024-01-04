@@ -86,6 +86,9 @@ int main()
 		0, 1, 2
 	};
 
+	xlux::log::Info("Num Vertices: " + std::to_string(vertices.size()));
+	xlux::log::Info("Num Indices: " + std::to_string(indices.size()));
+
 	auto totalSize = sizeof(VertexInData) * vertices.size() + sizeof(xlux::U32) * indices.size();
 	auto deviceMemory = device->AllocateMemory(totalSize);
 
@@ -110,6 +113,7 @@ int main()
 
 		Window::SetTitle("Xlux Engine [Hello Triangle] - Jaysmito Mukherjee - FPS: " + std::to_string(1.0f / deltaTime));
 
+		xlux::log::Info("FRAME----------------------");
 		renderer->BeginFrame();
 		renderer->BindFramebuffer(framebuffer);
 		renderer->SetViewport(0, 0, framebuffer->GetWidth(), framebuffer->GetHeight());
