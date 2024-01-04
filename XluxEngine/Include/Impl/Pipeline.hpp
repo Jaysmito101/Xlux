@@ -65,6 +65,7 @@ namespace xlux
 		Bool blendEnable = false;
 		Bool rasterizerDiscardEnable = false;
 		Bool enableClipping = false;
+		Bool enableBackfaceCulling = false;
 
 		PipelineCreateInfo() = default;
 		~PipelineCreateInfo() = default;
@@ -101,6 +102,12 @@ namespace xlux
 		PipelineCreateInfo& SetClippingEnable(bool enable)
 		{
 			enableClipping = enable;
+			return *this;
+		}
+
+		PipelineCreateInfo& SetBackfaceCullingEnable(bool enable)
+		{
+			enableBackfaceCulling = enable;
 			return *this;
 		}
 

@@ -3,9 +3,10 @@
 
 namespace xlux
 {
-	Bool FrameClearWorker::Execute(FrameClearWorkerInput payload, U32& result)
+	Bool FrameClearWorker::Execute(FrameClearWorkerInput payload, U32& result, Size threadID)
 	{
-		(void)result;
+		(void)result, (void)threadID;
+
 		const auto maxX = std::min(payload.x + payload.width, static_cast<U32>(m_Framebuffer->GetWidth()));
 		const auto maxY = std::min(payload.y + payload.height, static_cast<U32>(m_Framebuffer->GetHeight()));
 

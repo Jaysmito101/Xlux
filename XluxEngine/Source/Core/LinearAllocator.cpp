@@ -4,10 +4,10 @@
 namespace xlux
 {
 
-	LinearAllocator::LinearAllocator(Size maxSize)
+	LinearAllocator::LinearAllocator(Size maxSize, Size threadCount)
 		: m_MaxSize(maxSize)
 	{
-		m_Data = new U8[maxSize];
+		m_Data = new U8[maxSize * threadCount];
 		if (m_Data == nullptr)
 		{
 			xlux::log::Error("Failed to allocate memory");
@@ -19,17 +19,20 @@ namespace xlux
 		delete[] m_Data;
 	}
 
-	RawPtr<U8> LinearAllocator::Allocate(Size size)
+	RawPtr<U8> LinearAllocator::Allocate(Size size, Size threadId)
 	{
-		std::lock_guard<std::mutex> lock(m_Mutex);
-
-		if (m_CurrentOffset + size > m_MaxSize)
+		// std::lock_guard<std::mutex> lock(m_Mutex);
+		auto& currentOffset = m_CurrentOffset[threadId];
+		
+		/*
+		if (currentOffset + size > m_MaxSize)
 		{
 			xlux::log::Error("LinearAllocator is full");
 		}
-
-		auto ptr = m_Data + m_CurrentOffset;
-		m_CurrentOffset += size;
+		*/
+		
+		auto ptr = m_Data + currentOffset + threadId * m_MaxSize;
+		currentOffset += size;
 
 		return ptr;
 	}
@@ -38,7 +41,10 @@ namespace xlux
 	{
 		std::lock_guard<std::mutex> lock(m_Mutex);
 		m_AllocationID++;
-		m_CurrentOffset = 0;
+		for (auto& offset : m_CurrentOffset)
+		{
+			offset = 0;
+		}
 	}
 
 }

@@ -24,7 +24,7 @@ namespace xlux
 		FrameClearWorker() = default;
 		~FrameClearWorker() = default;
 
-		Bool Execute(FrameClearWorkerInput payload, U32& result) override;		
+		Bool Execute(FrameClearWorkerInput payload, U32& result, Size threadID) override;		
 
 		inline void SetFramebuffer(RawPtr<IFramebuffer> fbo) { m_Framebuffer = fbo; }
 		inline void SetClearColor(const math::Vec4& color) { m_Color = color; }

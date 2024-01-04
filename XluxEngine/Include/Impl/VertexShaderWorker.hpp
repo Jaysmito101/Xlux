@@ -22,7 +22,7 @@ namespace xlux
 		VertexShaderWorker() = default;
 		~VertexShaderWorker() = default;
 
-		Bool Execute(VertexShaderWorkerInput payload, U32& result) override;
+		Bool Execute(VertexShaderWorkerInput payload, U32& result, Size threadID) override;
 
 		inline void SetVertexBuffer(RawPtr<Buffer> buffer) { m_VertexBuffer = buffer; }
 		inline void SetIndexBuffer(RawPtr<Buffer> buffer) { m_IndexBuffer = buffer; }
@@ -32,9 +32,10 @@ namespace xlux
 		inline void SetRasterizer(std::function<Bool(ShaderTriangleRef)> rasterizer) { m_Rasterizer = rasterizer; }
 
 	private:
-		List<ShaderTriangleRef> ClipTrianglesAgainstPlane(const List<ShaderTriangleRef>& triangles, const math::Vec3& planeNormal, const math::Vec3& planePoint);
-		List<ShaderTriangleRef> ClipTriangleAgainstPlane(const ShaderTriangleRef& triangle, const math::Vec3& planeNormal, const math::Vec3& planePoint);
+		Size ClipTrianglesAgainstPlane(const ShaderTriangleRef* triangles, Size tianglesCountIn, const math::Vec3& planeNormal, const math::Vec3& planePoint, Size threadID, ShaderTriangleRef* result);
+		Size ClipTriangleAgainstPlane(const ShaderTriangleRef& triangle, const math::Vec3& planeNormal, const math::Vec3& planePoint, Size threadID, Size tianglesCount, ShaderTriangleRef* result);
 		Pair<math::Vec3, F32> PlaneIntersection(const math::Vec3& planeNormal, const math::Vec3& planePoint, const math::Vec3& lineStart, const math::Vec3& lineEnd);
+		Bool IsTriangleFacingCamera(const math::Vec4& v0, const math::Vec4& v1, const math::Vec4& v2);
 
 	private:
 		RawPtr<Buffer> m_VertexBuffer = nullptr;

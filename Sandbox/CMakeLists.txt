@@ -10,7 +10,7 @@ else()
 endif()
 
 link_libraries(
-    xluxengine
+    xluxengine-static
 )
 
 add_compile_definitions(

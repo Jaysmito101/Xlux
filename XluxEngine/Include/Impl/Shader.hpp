@@ -31,12 +31,12 @@ namespace xlux
 	class ShaderTriangleRef
 	{
 	public:
-		ShaderTriangleRef(RawPtr<LinearAllocator> alloc, Size vertexDataSize)
+		ShaderTriangleRef(RawPtr<LinearAllocator> alloc, Size vertexDataSize, Size m_ThreadID)
 		{
 			m_VertexDataSize = vertexDataSize;
-			m_VertexData[0] = alloc->Allocate( vertexDataSize + sizeof(ShaderBuiltIn) );
-			m_VertexData[1] = alloc->Allocate( vertexDataSize + sizeof(ShaderBuiltIn) );
-			m_VertexData[2] = alloc->Allocate( vertexDataSize + sizeof(ShaderBuiltIn) );
+			m_VertexData[0] = alloc->Allocate( vertexDataSize + sizeof(ShaderBuiltIn), m_ThreadID);
+			m_VertexData[1] = alloc->Allocate( vertexDataSize + sizeof(ShaderBuiltIn), m_ThreadID);
+			m_VertexData[2] = alloc->Allocate( vertexDataSize + sizeof(ShaderBuiltIn), m_ThreadID);
 
 			m_BuiltInRefs[0] = reinterpret_cast<RawPtr<ShaderBuiltIn>>(reinterpret_cast<U8*>(m_VertexData[0]) + vertexDataSize);
 			m_BuiltInRefs[1] = reinterpret_cast<RawPtr<ShaderBuiltIn>>(reinterpret_cast<U8*>(m_VertexData[1]) + vertexDataSize);

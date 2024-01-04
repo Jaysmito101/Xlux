@@ -98,6 +98,7 @@ int main()
 		.SetInterpolator(interpolator)
 		.SetDepthTestEnable(true)
 		.SetClippingEnable(true)
+		.SetBackfaceCullingEnable(true)
 		.SetDepthCompareFunction(xlux::CompareFunction_Less)
 		.SetVertexItemSize(sizeof(VertexInData))
 		.SetVertexToFragmentDataSize(sizeof(VertexOutData));

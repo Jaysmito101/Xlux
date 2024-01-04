@@ -27,7 +27,7 @@ namespace xlux
 		FragmentShaderWorker() = default;
 		~FragmentShaderWorker() = default;
 
-		Bool Execute(FragmentShaderWorkerInput payload, U32& result) override;
+		Bool Execute(FragmentShaderWorkerInput payload, U32& result, Size threadID) override;
 
 		inline void SetPipeline(RawPtr<Pipeline> pipeline) { m_Pipeline = pipeline; }
 		inline void SetFramebuffer(RawPtr<IFramebuffer> framebuffer) { m_Framebuffer = framebuffer; }

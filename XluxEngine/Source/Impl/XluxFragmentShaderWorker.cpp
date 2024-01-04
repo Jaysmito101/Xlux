@@ -12,7 +12,7 @@ namespace xlux
 	// follows top-left rule
 	Bool FragmentShaderWorker::PointInTriangle(const math::Vec2& p, const math::Vec4& p0, const math::Vec4& p1, const math::Vec4& p2)
 	{
-		const auto BAIS = 2.025f;
+		const auto BAIS = 1.025f;
 
         const auto v0 = math::Vec2(p2[0] - p0[0], p2[1] - p0[1]);
 		const auto v1 = math::Vec2(p1[0] - p0[0], p1[1] - p0[1]);
@@ -46,18 +46,18 @@ namespace xlux
 		return math::Vec3(w, v, u);
 	}
 
-	Bool FragmentShaderWorker::Execute(FragmentShaderWorkerInput payload, U32& result)
+	Bool FragmentShaderWorker::Execute(FragmentShaderWorkerInput payload, U32& result, Size threadID)
 	{
-		(void)result;
+		(void)result, (void)threadID;
 
 		// payload.triangle.Log();
 
 		auto boundingBox = payload.triangle.GetBoundingBox();
 
-		payload.startX = std::max(payload.startX, static_cast<U32>(boundingBox[0]));
-		payload.startY = std::max(payload.startY, static_cast<U32>(boundingBox[1]));
-		payload.width = std::min(payload.width, static_cast<U32>(boundingBox[2] - payload.startX));
-		payload.height = std::min(payload.height, static_cast<U32>(boundingBox[3] - payload.startY));
+		const auto startX = std::max(payload.startX, static_cast<U32>(boundingBox[0]));
+		const auto startY = std::max(payload.startY, static_cast<U32>(boundingBox[1]));
+		const auto endX = std::min (payload.startX + payload.width, static_cast<U32>(boundingBox[2]));
+		const auto endY = std::min (payload.startY + payload.height, static_cast<U32>(boundingBox[3]));
 
 		auto interpolator = m_Pipeline->m_CreateInfo.interpolator;
 
@@ -71,9 +71,9 @@ namespace xlux
 		auto& p2 = payload.triangle.GetBuiltInRef(2)->Position;
 		auto vertexData = payload.triangle.GetVertexData();
 
-		for (U32 y = payload.startY; y < payload.startY + payload.height; ++y)
+		for (U32 y = startY; y < endY; ++y)
 		{
-			for (U32 x = payload.startX; x < payload.startX + payload.width; ++x)
+			for (U32 x = startX; x < endX; ++x)
 			{
 				// klux::log::Info("FragmentShaderWorker::Execute({},{})", x, y);
 				auto p = math::Vec2((F32)x, (F32)y);

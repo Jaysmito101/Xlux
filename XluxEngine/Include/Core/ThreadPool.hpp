@@ -5,11 +5,14 @@
 namespace xlux
 {
 	template <typename JobPayload, typename JobResult>
+	class PoolWorker;
+
+	template <typename JobPayload, typename JobResult>
 	class IJob
 	{
 	public:
 		virtual ~IJob() = default;
-		virtual Bool Execute(JobPayload payload, JobResult& result) = 0;
+		virtual Bool Execute(JobPayload payload, JobResult& result, Size m_ThreadID) = 0;
 	};
 
 	template <typename JobPayload, typename JobResult>
@@ -84,8 +87,9 @@ namespace xlux
 		friend class ThreadPool;
 
 	private:
-		PoolWorker(RawPtr<IJob<JobPayload, JobResult>> job)
+		PoolWorker(RawPtr<IJob<JobPayload, JobResult>> job, Size id)
 		{
+			m_ID = id;	
 			m_Job = job;
 			m_IsAlive = true;
 			m_Thread = std::thread(&PoolWorker::Run, this);
@@ -109,7 +113,7 @@ namespace xlux
 				while ((m_IsPaused || m_Jobs.empty()) && m_IsAlive)
 				{
 					std::this_thread::sleep_for(std::chrono::microseconds(m_SleepDuration));
-					// std::this_thread::yield();
+					 //std::this_thread::yield();
 				}
 
 				if (m_Jobs.size() > 0)
@@ -122,7 +126,7 @@ namespace xlux
 						m_Jobs.pop();
 					}
 
-					Bool res = m_Job->Execute(job, result);
+					Bool res = m_Job->Execute(job, result, m_ID);
 
 					if (res)
 					{
@@ -137,6 +141,7 @@ namespace xlux
 		}
 
 	private:
+		Size m_ID = 0;
 		std::mutex m_JobMutex;
 		std::mutex m_JobDoneMutex;
 		RawPtr<IJob<JobPayload, JobResult>> m_Job;
@@ -163,7 +168,7 @@ namespace xlux
 		ThreadPool(RawPtr<IJob<JobPayload, JobResult>> job)
 		{
 			for (U32 i = 0; i < JobCount; ++i)
-				m_Workers[i] = new PoolWorker<JobPayload, JobResult>(job);
+				m_Workers[i] = new PoolWorker<JobPayload, JobResult>(job, i);
 		}
 
 		~ThreadPool()
@@ -259,9 +264,16 @@ namespace xlux
 		inline U32 AddJob(const JobPayload& job)
 		{
 			std::lock_guard<std::mutex> lock(m_JobMutex);
-			U32 id = m_CurrentWorker;
-			m_Workers[m_CurrentWorker]->AddJob(job);
-			m_CurrentWorker = (m_CurrentWorker + 1) % JobCount;
+			U32 id = (m_CurrentWorker = (m_CurrentWorker + 1) % JobCount);
+			m_Workers[id]->AddJob(job);
+			return id;
+		}
+
+		inline U32 AddJobTo(const JobPayload& job, U32 threadID)
+		{
+			// std::lock_guard<std::mutex> lock(m_JobMutex); // not needed
+			U32 id = threadID;
+			m_Workers[id]->AddJob(job);
 			return id;
 		}
 

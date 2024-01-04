@@ -8,7 +8,7 @@
 
 namespace xlux
 {
-	Bool VertexShaderWorker::Execute(VertexShaderWorkerInput payload, U32& result)
+	Bool VertexShaderWorker::Execute(VertexShaderWorkerInput payload, U32& result, Size threadID)
 	{
 		(void)result;
 
@@ -28,7 +28,7 @@ namespace xlux
 		};
 
 
-		auto seedTraingle = ShaderTriangleRef(m_VertexToFragmentDataAllocator, m_Pipeline->m_CreateInfo.vertexToFragmentDataSize);
+		auto seedTraingle = ShaderTriangleRef(m_VertexToFragmentDataAllocator, m_Pipeline->m_CreateInfo.vertexToFragmentDataSize, threadID);
 
 		// Vertex Shader Call
 		for (auto i = 0; i < 3; ++i)
@@ -38,11 +38,24 @@ namespace xlux
 			m_Pipeline->m_CreateInfo.vertexShader->Execute(vertexData[i], seedTraingle.GetVertexData(i), seedTraingle.GetBuiltInRef(i));
 			seedTraingle.GetBuiltInRef(i)->Position /= seedTraingle.GetBuiltInRef(i)->Position[3];
 		}
-		
-		// Clipping
-		auto triangles = List<ShaderTriangleRef> { seedTraingle };
 
-		
+		// Backface Culling
+		if (m_Pipeline->m_CreateInfo.enableBackfaceCulling)
+		{
+			if (!IsTriangleFacingCamera(seedTraingle.GetBuiltInRef(0)->Position, seedTraingle.GetBuiltInRef(1)->Position, seedTraingle.GetBuiltInRef(2)->Position))
+			{
+				return false;
+			}
+		}
+
+		// Clipping
+		// auto triangles = List<ShaderTriangleRef>{ seedTraingle };
+		ShaderTriangleRef trianglesBuffer[2][16];
+		auto triangleBufferIndex = 0;
+		auto triangles = trianglesBuffer[triangleBufferIndex];
+		triangles[0] = seedTraingle;
+		Size triangleCount = 1;
+
 		// The way the fragment shader has been implemented, this renderer
 		// doesnt really need to clip triangles as it can automatically
 		// discard fragments that are outside the viewport.
@@ -51,7 +64,7 @@ namespace xlux
 		{
 
 			// normal, point on plane (these are the planes of the cube from {-1, -1, -1} to {1, 1, 1})
-			const List<math::Vec3> clipPlanes = {
+			static const Array<math::Vec3, 6> clipPlanes = {
 				math::Vec3(1.0f, 0.0f, 0.0f),
 				math::Vec3(0.0f, 1.0f, 0.0f),
 				math::Vec3(0.0f, 0.0f, 1.0f),
@@ -62,18 +75,22 @@ namespace xlux
 
 			for (const auto& plane : clipPlanes)
 			{
-				triangles = ClipTrianglesAgainstPlane(triangles, plane, plane);
+				// triangles = ClipTrianglesAgainstPlane(triangles, plane, plane, threadID);
+				triangleCount = ClipTrianglesAgainstPlane(trianglesBuffer[triangleBufferIndex], triangleCount, plane, plane, threadID, trianglesBuffer[1 - triangleBufferIndex]);
+				triangleBufferIndex = 1 - triangleBufferIndex;
 			}
-
 		}
+
+		triangles = trianglesBuffer[triangleBufferIndex];
 
 
 		// Rasterization
 		// if (m_Rasterizer) // this will be true if everything is ok so just skip the check for performance
 		{
-			for (auto& triangle : triangles)
+			// for (auto& triangle : triangles)
+			for (auto ti = 0 ; ti < triangleCount; ++ti)
 			{
-
+				auto& triangle = triangles[ti];
 				// Transform NDC to Screen space
 				for (auto i = 0; i < 3; ++i)
 				{
@@ -93,20 +110,21 @@ namespace xlux
 		return false;
 	}
 
-	List<ShaderTriangleRef> VertexShaderWorker::ClipTrianglesAgainstPlane(const List<ShaderTriangleRef>& triangles, const math::Vec3& planeNormal, const math::Vec3& planePoint)
+	Size VertexShaderWorker::ClipTrianglesAgainstPlane(const ShaderTriangleRef* triangles, Size tianglesCountIn, const math::Vec3& planeNormal, const math::Vec3& planePoint, Size threadID, ShaderTriangleRef* result)
 	{
-		auto result = List<ShaderTriangleRef>();
-		for (const auto& triangle : triangles)
+		Size tianglesCountOut = 0;
+		// for (const auto& triangle : triangles)
+		for (auto i = 0; i < tianglesCountIn; ++i)
 		{
-			auto clipped = ClipTriangleAgainstPlane(triangle, planeNormal, planePoint);
-			result.insert(result.end(), clipped.begin(), clipped.end());
+			tianglesCountOut = ClipTriangleAgainstPlane(triangles[i], planeNormal, planePoint, threadID, tianglesCountOut, result);
 		}
-		return result;
+		return tianglesCountOut;
 	}
 
-	List<ShaderTriangleRef> VertexShaderWorker::ClipTriangleAgainstPlane(const ShaderTriangleRef& triangle, const math::Vec3& planeNormal, const math::Vec3& planePoint)
+
+	Size VertexShaderWorker::ClipTriangleAgainstPlane(const ShaderTriangleRef& triangle, const math::Vec3& planeNormal, const math::Vec3& planePoint, Size threadID, Size tianglesCount, ShaderTriangleRef* result)
 	{
-		auto result = List<ShaderTriangleRef>();
+		//auto result = List<ShaderTriangleRef>();
 		auto intepolator = m_Pipeline->m_CreateInfo.interpolator;
 
 		Array<Pair<math::Vec4, U32>, 3> insidePoints;
@@ -137,10 +155,11 @@ namespace xlux
 		pushPoint(triangle.GetBuiltInRef(1)->Position, 1);
 		pushPoint(triangle.GetBuiltInRef(2)->Position, 2);
 
-		
+
 		if (insidePointsCount == 3)
 		{
-			result.push_back(triangle);
+			// result.push_back(triangle);
+			result[tianglesCount++] = triangle;
 		}
 		else if (insidePointsCount == 2)
 		{
@@ -151,11 +170,11 @@ namespace xlux
 			auto [interSectionPoint0, t0] = PlaneIntersection(planeNormal, planePoint, math::Vec3(insidePoint0.x), math::Vec3(outsidePoint0.x));
 			auto [interSectionPoint1, t1] = PlaneIntersection(planeNormal, planePoint, math::Vec3(insidePoint1.x), math::Vec3(outsidePoint0.x));
 
-			auto triangle0 = ShaderTriangleRef(m_VertexToFragmentDataAllocator, m_Pipeline->m_CreateInfo.vertexToFragmentDataSize);
-			auto triangle1 = ShaderTriangleRef(m_VertexToFragmentDataAllocator, m_Pipeline->m_CreateInfo.vertexToFragmentDataSize);
-			
+			auto triangle0 = ShaderTriangleRef(m_VertexToFragmentDataAllocator, m_Pipeline->m_CreateInfo.vertexToFragmentDataSize, threadID);
+			auto triangle1 = ShaderTriangleRef(m_VertexToFragmentDataAllocator, m_Pipeline->m_CreateInfo.vertexToFragmentDataSize, threadID);
+
 			{
-	
+
 				std::memcpy(triangle0.GetVertexData(0), triangle.GetVertexData(insidePoint0.y), m_Pipeline->m_CreateInfo.vertexToFragmentDataSize);
 				std::memcpy(triangle0.GetVertexData(1), triangle.GetVertexData(insidePoint1.y), m_Pipeline->m_CreateInfo.vertexToFragmentDataSize);
 
@@ -166,8 +185,9 @@ namespace xlux
 				triangle0.GetBuiltInRef(0)->Position = insidePoint0.x;
 				triangle0.GetBuiltInRef(1)->Position = insidePoint1.x;
 				triangle0.GetBuiltInRef(2)->Position = math::Vec4(interSectionPoint1, 1.0f);
-				
-				result.push_back(triangle0);
+
+				//result.push_back(triangle0);
+				result[tianglesCount++] = triangle0;
 			}
 
 			{
@@ -182,8 +202,9 @@ namespace xlux
 				triangle1.GetBuiltInRef(0)->Position = insidePoint0.x;
 				triangle1.GetBuiltInRef(1)->Position = math::Vec4(interSectionPoint1, 1.0f);
 				triangle1.GetBuiltInRef(2)->Position = math::Vec4(interSectionPoint0, 1.0f);
-				
-				result.push_back(triangle1);
+
+				// result.push_back(triangle1);
+				result[tianglesCount++] = triangle1;
 			}
 		}
 		else if (insidePointsCount == 1)
@@ -195,7 +216,7 @@ namespace xlux
 			auto [interSectionPoint0, t0] = PlaneIntersection(planeNormal, planePoint, math::Vec3(insidePoint0.x), math::Vec3(outsidePoint0.x));
 			auto [interSectionPoint1, t1] = PlaneIntersection(planeNormal, planePoint, math::Vec3(insidePoint0.x), math::Vec3(outsidePoint1.x));
 
-			auto triangle0 = ShaderTriangleRef(m_VertexToFragmentDataAllocator, m_Pipeline->m_CreateInfo.vertexToFragmentDataSize);
+			auto triangle0 = ShaderTriangleRef(m_VertexToFragmentDataAllocator, m_Pipeline->m_CreateInfo.vertexToFragmentDataSize, threadID);
 
 			std::memcpy(triangle0.GetVertexData(0), triangle.GetVertexData(insidePoint0.y), m_Pipeline->m_CreateInfo.vertexToFragmentDataSize);
 
@@ -212,14 +233,15 @@ namespace xlux
 			triangle0.GetBuiltInRef(1)->Position = math::Vec4(interSectionPoint0, 1.0f);
 			triangle0.GetBuiltInRef(2)->Position = math::Vec4(interSectionPoint1, 1.0f);
 
-			result.push_back(triangle0);
+			// result.push_back(triangle0);
+			result[tianglesCount++] = triangle0;
 		}
 		else
 		{
 			// all points are outside so no triangle is generated
 		}
 
-		return result;
+		return true;
 	}
 
 	Pair<math::Vec3, F32> VertexShaderWorker::PlaneIntersection(const math::Vec3& planeNormal, const math::Vec3& planePoint, const math::Vec3& lineStart, const math::Vec3& lineEnd)
@@ -227,7 +249,16 @@ namespace xlux
 		auto planeDistance = planeNormal.Dot(planePoint - lineStart);
 		auto lineDistance = planeNormal.Dot(lineEnd - lineStart);
 		auto t = planeDistance / lineDistance;
-		return {lineStart + (lineEnd - lineStart) * t, t };
+		return { lineStart + (lineEnd - lineStart) * t, t };
+	}
+
+	Bool VertexShaderWorker::IsTriangleFacingCamera(const math::Vec4& v0, const math::Vec4& v1, const math::Vec4& v2)
+	{
+		auto v0v1 = math::Vec3(v1 - v0);
+		auto v0v2 = math::Vec3(v2 - v0);
+		auto normal = v0v1.Cross(v0v2);
+		static const auto cameraToTriangle = math::Vec3(0.0f, 0.0f, -1.0f);
+		return normal.Dot(cameraToTriangle) < 0.0f;
 	}
 
 
