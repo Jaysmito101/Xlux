@@ -241,7 +241,7 @@ namespace xlux
 			// all points are outside so no triangle is generated
 		}
 
-		return true;
+		return tianglesCount;
 	}
 
 	Pair<math::Vec3, F32> VertexShaderWorker::PlaneIntersection(const math::Vec3& planeNormal, const math::Vec3& planePoint, const math::Vec3& lineStart, const math::Vec3& lineEnd)
@@ -256,9 +256,15 @@ namespace xlux
 	{
 		auto v0v1 = math::Vec3(v1 - v0);
 		auto v0v2 = math::Vec3(v2 - v0);
+
+		/*
 		auto normal = v0v1.Cross(v0v2);
 		static const auto cameraToTriangle = math::Vec3(0.0f, 0.0f, -1.0f);
 		return normal.Dot(cameraToTriangle) < 0.0f;
+		*/
+
+		auto sign = (v0v1[0] * v0v2[1] - v0v1[1] * v0v2[0]);
+		return sign >= 0.0f;
 	}
 
 

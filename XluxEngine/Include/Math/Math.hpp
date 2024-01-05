@@ -11,7 +11,7 @@ namespace xlux
 
 	namespace math
 	{
-		using namespace math_normal;
+		 using namespace math_normal;
 		//using namespace math_simd;
 		
 

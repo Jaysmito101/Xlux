@@ -24,13 +24,12 @@ namespace xlux
 		// std::lock_guard<std::mutex> lock(m_Mutex);
 		auto& currentOffset = m_CurrentOffset[threadId];
 		
-		/*
+		
 		if (currentOffset + size > m_MaxSize)
 		{
 			xlux::log::Error("LinearAllocator is full");
 		}
-		*/
-		
+				
 		auto ptr = m_Data + currentOffset + threadId * m_MaxSize;
 		currentOffset += size;
 

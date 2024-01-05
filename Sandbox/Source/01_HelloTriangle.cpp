@@ -71,6 +71,7 @@ int main()
 		.SetShader(vertexShader, xlux::ShaderStage_Vertex)
 		.SetShader(fragmentShader, xlux::ShaderStage_Fragment)
 		.SetInterpolator(interpolator)
+		.SetBackfaceCullingEnable(true)
 		.SetVertexItemSize(sizeof(VertexInData))
 		.SetVertexToFragmentDataSize(sizeof(VertexOutData));
 

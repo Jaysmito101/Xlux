@@ -95,7 +95,7 @@ int main()
 
 	const auto indices = std::vector<xlux::U32>{
 		0, 1, 2,
-		1, 2, 3
+		3, 2, 1
 	};
 
 	stbi_set_flip_vertically_on_load(true);

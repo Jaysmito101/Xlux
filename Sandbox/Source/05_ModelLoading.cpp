@@ -104,7 +104,7 @@ int main()
 		.SetVertexToFragmentDataSize(sizeof(VertexOutData));
 
 	auto pipeline = device->CreatePipeline(createInfo);
-
+	
 	// Vectices for a cube with vertex Normals (all 36 vertices)
 	std::vector<VertexInData> vertices = {};
 	std::vector<xlux::U32> indices = {};
@@ -150,13 +150,13 @@ int main()
 				attrib.normals[3 * index.normal_index + 1],
 				attrib.normals[3 * index.normal_index + 2]
 			);
-
+			
 			vertices.push_back(vertex);
 			indices.push_back(v_index_offset + v);
 		}
 		v_index_offset += face;
-	}
-
+	}	
+	
 
 	xlux::log::Info("Vertices: {}", vertices.size());
 	xlux::log::Info("Indices: {}", indices.size());
@@ -167,7 +167,7 @@ int main()
 	xlux::I32 tWidth = 0, tHeight = 0, tChannels = 0;
 	auto textureData = stbi_loadf((xlux::utils::GetExecutableDirectory() + "/texture.png").c_str(), &tWidth, &tHeight, &tChannels, 3);
 	auto texture = device->CreateTexture2D(tWidth, tHeight, xlux::TexelFormat_RGB);
-
+	
 
 	auto totalSize = sizeof(VertexInData) * vertices.size() + sizeof(xlux::U32) * indices.size() + texture->GetSizeInBytes();
 	auto deviceMemory = device->AllocateMemory(totalSize);
@@ -197,7 +197,7 @@ int main()
 	fragmentShader->texture = texture;
 
 	const xlux::F32 dist = 220.0f;
-
+	
 
 	while (!Window::HasClosed())
 	{

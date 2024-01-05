@@ -20,7 +20,7 @@ namespace xlux
 		m_FragmentShaderJob = CreateRawPtr<FragmentShaderWorker>();
 		m_FragmentShaderThreadPool = CreateRawPtr<ThreadPool<k_FragmentShaderWorkerCountX * k_FragmentShaderWorkerCountY, FragmentShaderWorkerInput, U32>>(m_FragmentShaderJob);
 
-		m_VertexToFragmentDataAllocator = CreateRawPtr<LinearAllocator>(1024 * 1024 * 16, k_VertexShaderWorkerCount); // 16MB x 8 = 128MB
+		m_VertexToFragmentDataAllocator = CreateRawPtr<LinearAllocator>(1024 * 1024 * 256, k_VertexShaderWorkerCount); // 256MB x 8 = 2GB
 	}
 
 	Renderer::~Renderer()
