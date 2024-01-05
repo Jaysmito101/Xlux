@@ -54,6 +54,12 @@ add_executable(05_modelloading
 	./Source/WindowFramebuffer.cpp
 )
 
+add_executable(06_pbr
+	./Source/06_PBR.cpp
+	./Source/Win32_Window.cpp
+	./Source/WindowFramebuffer.cpp
+)
+
 if (WIN32)
     add_compile_definitions(
         _CRT_SECURE_NO_WARNINGS

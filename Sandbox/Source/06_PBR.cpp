@@ -455,7 +455,7 @@ int main()
 		deltaTime = currTime - prevTime;
 		prevTime = currTime;
 
-		Window::SetTitle("Xlux Engine [Model Loading] - Jaysmito Mukherjee - FPS: " + std::to_string(1.0f / deltaTime));
+		Window::SetTitle("Xlux Engine [PBR] - Jaysmito Mukherjee - FPS: " + std::to_string(1.0f / deltaTime));
 		// vertexShader->model = xlux::math::Mat4x4::RotateY(currTime * 0.5f);
 		fragmentShader->cameraPosition = xlux::math::Vec3(dist * cos(currTime * speed * 0.2f + offset), 12.0f, dist * sin(currTime * speed * 0.2f + offset));
 		view = xlux::math::Mat4x4::LookAt(fragmentShader->cameraPosition, xlux::math::Vec3(0.0f, 5.0f, 0.0f), xlux::math::Vec3(0.0f, 1.0f, 0.0f));
