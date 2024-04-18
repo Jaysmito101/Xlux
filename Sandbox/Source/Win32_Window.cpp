@@ -188,12 +188,11 @@ xlux::Bool Window::HasClosed()
 void Window::Update()
 {
 	MSG messages = { 0 };
-	while (GetMessage(&messages, NULL, 0, 0))
+	while (PeekMessage(&messages, s_WindowHandle, 0, 0, PM_REMOVE))
 	{
 		// klux::log::Info("Mesage : {0}", Win32MessageToString(messages.message));
 		TranslateMessage(&messages);
 		DispatchMessage(&messages);
-		break;
 	}
 }
 

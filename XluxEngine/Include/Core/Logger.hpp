@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <mutex>
 #include <format>
 
 #include "Core/Types.hpp"
