@@ -2,6 +2,7 @@ include_directories(
     ./Include
     ../XluxEngine/Include
     ./Vendor/imgui
+    ./Vendor/imgui/backends
 )
 
 if (MSVC)
@@ -67,6 +68,7 @@ add_executable(07_imgui
 	./Source/Win32_Window.cpp
 	./Source/WindowFramebuffer.cpp
     ./Source/imgui_impl_xlux.cpp
+    ./Vendor/imgui/backends/imgui_impl_win32.cpp
 )
 target_link_libraries(07_imgui imgui)
 

@@ -3,6 +3,8 @@
 
 
 #include "imgui.h"
+#include "imgui_impl_xlux.h"
+#include "imgui_impl_win32.h"
 
 struct VertexInData
 {
@@ -70,6 +72,9 @@ int main()
 	auto device = xlux::Device::Create();
 	auto framebuffer = Window::GetFramebuffer();
 
+	ImGui_ImplWin32_InitForOpenGL(Window::GetRawHandle());
+	ImGui_ImplXlux_Init(device);
+
 	auto vertexShader = xlux::CreateRawPtr<HelloWorldVShader>();
 	auto fragmentShader = xlux::CreateRawPtr<HelloWorldFShader>();
 	auto interpolator = xlux::CreateRawPtr<xlux::BasicInterpolator<VertexOutData>>();
@@ -110,7 +115,6 @@ int main()
 
 	auto renderer = device->CreateRenderer();
 
-
 	auto prevTime = xlux::utils::GetTime(), currTime = xlux::utils::GetTime(), deltaTime = 0.0f;
 
 	while (!Window::HasClosed())
@@ -130,10 +134,13 @@ int main()
 		renderer->DrawIndexed(vertexBuffer, indexBuffer, static_cast<xlux::U32>(indices.size()));
 
 
+		ImGui_ImplXlux_NewFrame();
+		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 		ImGui::ShowDemoWindow();
 		ImGui::Render();
-		
+
+		ImGui_ImplXlux_RenderDrawData(ImGui::GetDrawData());
 		
 
 		renderer->EndFrame();
@@ -152,6 +159,9 @@ int main()
 	delete vertexShader;
 	delete fragmentShader;
 	delete interpolator;
+
+	ImGui_ImplXlux_Shutdown(); // Must be called before destroying the device
+	ImGui_ImplWin32_Shutdown();
 
 	xlux::Device::Destroy(device);
 	Window::Destroy();

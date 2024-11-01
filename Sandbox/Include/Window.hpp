@@ -20,6 +20,7 @@ public:
 	static void Clear(xlux::F32 r, xlux::F32 g, xlux::F32 b, xlux::F32 a);
 	static void SetPixel(xlux::F32 x, xlux::F32 y, xlux::F32 r, xlux::F32 g, xlux::F32 b, xlux::F32 a);
 	static void SetTitle(const xlux::String& title);
+	static void* GetRawHandle();
 
 	inline static xlux::I32 GetWidth() { return s_Instance->m_Width; }
 	inline static xlux::I32 GetHeight(){ return s_Instance->m_Height; }
@@ -53,6 +54,4 @@ public:
 
 	virtual void GetColorPixel(xlux::I32 channel, xlux::I32 x, xlux::I32 y, xlux::F32& r, xlux::F32& g, xlux::F32& b, xlux::F32& a) const;
 	virtual void GetDepthPixel(xlux::I32 x, xlux::I32 y, xlux::F32& depth) const;
-
-
 };

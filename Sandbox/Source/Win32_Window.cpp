@@ -180,6 +180,11 @@ Window::Window(const std::string& title, int width, int height)
 
 }
 
+
+void* Window::GetRawHandle() {
+	return s_WindowHandle;
+}
+
 xlux::Bool Window::HasClosed()
 {
 	return s_HasClosed;
