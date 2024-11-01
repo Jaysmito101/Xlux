@@ -173,22 +173,22 @@ namespace xlux
 
 		switch (level)
 		{
-		case klux::LogLevel::Trace:
+		case xlux::LogLevel::Trace:
 			std::cout << "\033[0;37m" << message << "\033[0m";
 			break;
-		case klux::LogLevel::Debug:
+		case xlux::LogLevel::Debug:
 			std::cout << "\033[0;32m" << message << "\033[0m";
 			break;
-		case klux::LogLevel::Info:
+		case xlux::LogLevel::Info:
 			std::cout << "\033[0;36m" << message << "\033[0m";
 			break;
-		case klux::LogLevel::Warning:
+		case xlux::LogLevel::Warning:
 			std::cout << "\033[0;33m" << message << "\033[0m";
 			break;
-		case klux::LogLevel::Error:
+		case xlux::LogLevel::Error:
 			std::cout << "\033[0;31m" << message << "\033[0m";
 			break;
-		case klux::LogLevel::Fatal:
+		case xlux::LogLevel::Fatal:
 			std::cout << "\033[0;35m" << message << "\033[0m";
 			break;
 		default:	

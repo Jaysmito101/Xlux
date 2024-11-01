@@ -31,7 +31,7 @@ namespace xlux
 			}
 
 			/*template <Size M, VectorValueType... Args>
-			static KLUX_FORCE_INLINE Vec<N, ValueTypeT> From(const Vec<M>& other, Args... args)
+			static XLUX_FORCE_INLINE Vec<N, ValueTypeT> From(const Vec<M>& other, Args... args)
 			{
 				auto result = Vec<N, ValueTypeT>();
 				if constexpr ((M + sizeof...(args)) < N) {
@@ -106,7 +106,7 @@ namespace xlux
 
 
 
-			/*KLUX_FORCE_INLINE Vec(Vec<N, ValueTypeT>&& other)
+			/*XLUX_FORCE_INLINE Vec(Vec<N, ValueTypeT>&& other)
 			{
 				std::memcpy(m_Data, other.m_Data, sizeof(m_Data));
 			}*/
@@ -117,7 +117,7 @@ namespace xlux
 				return *this;
 			}
 
-			/*KLUX_FORCE_INLINE Vec<N, ValueTypeT>& operator=(Vec<N, ValueTypeT>&& other)
+			/*XLUX_FORCE_INLINE Vec<N, ValueTypeT>& operator=(Vec<N, ValueTypeT>&& other)
 			{
 				std::memcpy(m_Data, other.m_Data, sizeof(m_Data));
 				return *this;

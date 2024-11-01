@@ -32,7 +32,7 @@ Xlux can ideally be used as a library and extended to whatever usage desited wit
 * Parallel Shaders API
   - Vertex Stage
   - Fragment Stage
-* Klux Device (resource manager)
+* Xlux Device (resource manager)
 * Buffers & Device Memory
 * Textures Support
   - Texture 2D
