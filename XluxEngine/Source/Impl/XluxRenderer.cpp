@@ -36,10 +36,10 @@ namespace xlux
 
 	void Renderer::BeginFrame()
 	{
-#if defined(KLUX_VERY_STRICT_CHECKS)
+#if defined(XLUX_VERY_STRICT_CHECKS)
 		if (m_IsInFrame)
 		{
-			klux::log::Error("Renderer::BeginFrame() called twice without calling EndFrame()");
+			xlux::log::Error("Renderer::BeginFrame() called twice without calling EndFrame()");
 		}
 #endif
 
@@ -48,10 +48,10 @@ namespace xlux
 
 	void Renderer::EndFrame()
 	{
-#if defined(KLUX_VERY_STRICT_CHECKS)
+#if defined(XLUX_VERY_STRICT_CHECKS)
 		if (!m_IsInFrame)
 		{
-			klux::log::Error("Renderer::EndFrame() called without calling BeginFrame()");
+			xlux::log::Error("Renderer::EndFrame() called without calling BeginFrame()");
 		}
 #endif
 
@@ -65,10 +65,10 @@ namespace xlux
 
 	void Renderer::BindFramebuffer(RawPtr<IFramebuffer> fbo)
 	{
-#if defined(KLUX_VERY_STRICT_CHECKS)
+#if defined(XLUX_VERY_STRICT_CHECKS)
 		if (!m_IsInFrame)
 		{
-			klux::log::Error("Renderer::BindFramebuffer() called without calling BeginFrame()");
+			xlux::log::Error("Renderer::BindFramebuffer() called without calling BeginFrame()");
 		}
 #endif
 
@@ -85,10 +85,10 @@ namespace xlux
 
 	void Renderer::Clear(Bool color, Bool depth)
 	{
-#if defined(KLUX_VERY_STRICT_CHECKS)
+#if defined(XLUX_VERY_STRICT_CHECKS)
 		if (!m_ActiveViewport.has_value())
 		{
-			klux::log::Error("Renderer::Clear() called without calling SetViewport()");
+			xlux::log::Error("Renderer::Clear() called without calling SetViewport()");
 		}
 #endif
 
@@ -124,25 +124,25 @@ namespace xlux
 
 	void Renderer::SetViewport(I32 x, I32 y, I32 width, I32 height)
 	{
-#if defined(KLUX_VERY_STRICT_CHECKS)
+#if defined(XLUX_VERY_STRICT_CHECKS)
 		if (!m_ActiveFramebuffer)
 		{
-			klux::log::Error("Renderer::SetViewport() called without calling BindFramebuffer()");
+			xlux::log::Error("Renderer::SetViewport() called without calling BindFramebuffer()");
 		}
 
 		if (width <= 0 || height <= 0)
 		{
-			klux::log::Error("Renderer::SetViewport() called with invalid viewport size");
+			xlux::log::Error("Renderer::SetViewport() called with invalid viewport size");
 		}
 
 		if (x < 0 || y < 0)
 		{
-			klux::log::Error("Renderer::SetViewport() called with invalid viewport position");
+			xlux::log::Error("Renderer::SetViewport() called with invalid viewport position");
 		}
 
 		if (x + width > m_ActiveFramebuffer->GetWidth() || y + height > m_ActiveFramebuffer->GetHeight())
 		{
-			klux::log::Error("Renderer::SetViewport() called with invalid viewport size");
+			xlux::log::Error("Renderer::SetViewport() called with invalid viewport size");
 		}
 #endif
 
@@ -153,35 +153,35 @@ namespace xlux
 
 	void Renderer::DrawIndexed(RawPtr<Buffer> vertexBuffer, RawPtr<Buffer> indexBuffer, U32 indexCount)
 	{
-#if defined(KLUX_VERY_STRICT_CHECKS)
+#if defined(XLUX_VERY_STRICT_CHECKS)
 		if (!m_IsInFrame)
 		{
-			klux::log::Error("Renderer::DrawIndexed() called without calling BeginFrame()");
+			xlux::log::Error("Renderer::DrawIndexed() called without calling BeginFrame()");
 		}
 
 		if (!m_ActiveFramebuffer)
 		{
-			klux::log::Error("Renderer::DrawIndexed() called without calling BindFramebuffer()");
+			xlux::log::Error("Renderer::DrawIndexed() called without calling BindFramebuffer()");
 		}
 
 		if (!m_ActivePipeline)
 		{
-			klux::log::Error("Renderer::DrawIndexed() called without calling BindPipeline()");
+			xlux::log::Error("Renderer::DrawIndexed() called without calling BindPipeline()");
 		}
 
 		if (!m_ActiveViewport.has_value())
 		{
-			klux::log::Error("Renderer::DrawIndexed() called without calling SetViewport()");
+			xlux::log::Error("Renderer::DrawIndexed() called without calling SetViewport()");
 		}
 
 		if (indexCount == 0)
 		{
-			klux::log::Error("Renderer::DrawIndexed() called with 0 index count");
+			xlux::log::Error("Renderer::DrawIndexed() called with 0 index count");
 		}
 
 		if (indexCount % 3 != 0)
 		{
-			klux::log::Error("Renderer::DrawIndexed() called with invalid index count");
+			xlux::log::Error("Renderer::DrawIndexed() called with invalid index count");
 		}
 #endif
 

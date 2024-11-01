@@ -14,7 +14,7 @@
 #if defined(_WIN32) || defined(_WIN64)
 	#if defined(XLUX_DLL_EXPORT)
 		#define XLUX_API __declspec(dllexport)
-	#elif defined(KLUX_DLL_IMPORT)
+	#elif defined(XLUX_DLL_IMPORT)
 		#define XLUX_API __declspec(dllimport)
 	#else
 		#define XLUX_API
@@ -24,7 +24,7 @@
 #endif
 
 
-#define XLUX_SAFE_DELETE(x) if(x) { delete x; x = nullptr; 
+#define XLUX_SAFE_DELETE(x) if(x) { delete x; x = nullptr; }
 
 #ifdef _MSC_VER
 	#define XLUX_FORCE_INLINE __forceinline
