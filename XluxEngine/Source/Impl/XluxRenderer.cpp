@@ -208,13 +208,70 @@ namespace xlux
 		m_FragmentShaderThreadPool->WaitJobDone();
 	}
 
+	void Renderer::DrawIndexedOrdered(RawPtr<Buffer> vertexBuffer, RawPtr<Buffer> indexBuffer, U32 indexCount, U32 indexOffset)
+	{
+#if defined(XLUX_VERY_STRICT_CHECKS)
+		if (!m_IsInFrame)
+		{
+			xlux::log::Error("Renderer::DrawIndexed() called without calling BeginFrame()");
+		}
+
+		if (!m_ActiveFramebuffer)
+		{
+			xlux::log::Error("Renderer::DrawIndexed() called without calling BindFramebuffer()");
+		}
+
+		if (!m_ActivePipeline)
+		{
+			xlux::log::Error("Renderer::DrawIndexed() called without calling BindPipeline()");
+		}
+
+		if (!m_ActiveViewport.has_value())
+		{
+			xlux::log::Error("Renderer::DrawIndexed() called without calling SetViewport()");
+		}
+
+		if (indexCount == 0)
+		{
+			xlux::log::Error("Renderer::DrawIndexed() called with 0 index count");
+		}
+
+		if (indexCount % 3 != 0)
+		{
+			xlux::log::Error("Renderer::DrawIndexed() called with invalid index count");
+		}
+#endif
+
+		m_VertexToFragmentDataAllocator->Reset();
+
+		auto vertexShaderJob = reinterpret_cast<RawPtr<VertexShaderWorker>>(m_VertexShaderJob);
+
+		vertexShaderJob->SetIndexBuffer(indexBuffer);
+		vertexShaderJob->SetVertexBuffer(vertexBuffer);
+		vertexShaderJob->SetPipeline(m_ActivePipeline);
+		vertexShaderJob->SetFramebuffer(m_ActiveFramebuffer);
+		vertexShaderJob->SetVertexToFragmentDataAllocator(m_VertexToFragmentDataAllocator);
+
+		vertexShaderJob->SetRasterizer(std::bind(&Renderer::PassTriangleToFragmentShader, this, std::placeholders::_1));
+
+		for (auto i = 0; i < static_cast<I32>(indexCount); i += 3)
+		{
+			m_VertexShaderThreadPool->AddJobTo({ static_cast<I32>(indexOffset) + i }, 0);
+		}
+
+
+
+		m_VertexShaderThreadPool->WaitJobDone();
+		m_FragmentShaderThreadPool->WaitJobDone();
+	}
+
 
 	Bool Renderer::PassTriangleToFragmentShader(ShaderTriangleRef triangle)
 	{
 		auto boundingBox = triangle.GetBoundingBox(); // (xmin, ymin, xmax, ymax)
 		// boundingBox *= math::Vec4(static_cast<F32>(m_ActiveFramebuffer->GetWidth()), static_cast<F32>(m_ActiveFramebuffer->GetHeight()), static_cast<F32>(m_ActiveFramebuffer->GetWidth()), static_cast<F32>(m_ActiveFramebuffer->GetHeight()));
 
-		auto fragmentShaderJob = reinterpret_cast<RawPtr<FragmentShaderWorker>>(m_FragmentShaderJob);
+		auto fragmentShaderJob = static_cast<RawPtr<FragmentShaderWorker>>(m_FragmentShaderJob);
 
 		fragmentShaderJob->SetFramebuffer(m_ActiveFramebuffer);
 		fragmentShaderJob->SetPipeline(m_ActivePipeline);

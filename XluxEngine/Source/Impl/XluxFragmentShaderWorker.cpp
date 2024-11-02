@@ -197,10 +197,6 @@ namespace xlux
 				F32 srcAlphaBlendFactor = CalculateBlendFactor(srcColor[3], dstColor[3], srcAlphaBlendFunc);
 				F32 dstAlphaBlendFactor = CalculateBlendFactor(srcColor[3], dstColor[3], dstAlphaBlendFunc);
 
-				if (srcColor[3] < 0.5) {
-					std::cout << "";
-				}
-
 				switch (blendEquation)
 				{
 				case xlux::BlendMode_Add:

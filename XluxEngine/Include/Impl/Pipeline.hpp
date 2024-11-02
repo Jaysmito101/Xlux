@@ -69,6 +69,7 @@ namespace xlux
 		Bool enableClipping = false;
 		Bool enableBackfaceCulling = false;
 
+
 		PipelineCreateInfo() = default;
 		~PipelineCreateInfo() = default;
 
@@ -178,9 +179,6 @@ namespace xlux
 			rasterizerDiscardEnable = enable;
 			return *this;
 		}
-
-
-
 	};
 
 	class XLUX_API Pipeline
@@ -196,6 +194,7 @@ namespace xlux
 
 		friend class VertexShaderWorker;
 		friend class FragmentShaderWorker;
+		friend class Renderer;
 	private:
 		PipelineCreateInfo m_CreateInfo;
 	};

@@ -52,11 +52,11 @@ struct ImGui_ImplXlux_Data
 
 struct ImGui_ImplXlux_VertexInData
 {
-	xlux::math::Vec2 position;
+	xlux::math::Vec3 position;
 	xlux::math::Vec2 uv;
     xlux::math::Vec4 color;
 
-	ImGui_ImplXlux_VertexInData(xlux::math::Vec2 position, xlux::math::Vec2 uv, xlux::math::Vec4 color)
+	ImGui_ImplXlux_VertexInData(xlux::math::Vec3 position, xlux::math::Vec2 uv, xlux::math::Vec4 color)
 		: position(position), uv(uv), color(color)
 	{}
 };
@@ -95,7 +95,7 @@ public:
 	{
 		dataOut->frag_uv = dataIn->uv;
 		dataOut->frag_color = dataIn->color;
-		builtIn->Position = proj_mtx.Mul(xlux::math::Vec4(dataIn->position, 0.0f, 1.0f));
+		builtIn->Position = proj_mtx.Mul(xlux::math::Vec4(dataIn->position, 1.0f));
 		return true;
 	}
 };
@@ -110,7 +110,6 @@ public:
 	{
 		(void)builtIn; // unused
 		dataOut->Color[0] = dataIn->frag_color * texture->Sample(xlux::math::Vec3(dataIn->frag_uv, 0.0f));
-        dataOut->Color[0][3] *= 0.2f;
 		return true;
 	}
 };
@@ -259,7 +258,7 @@ void ImGui_ImplXlux_RenderDrawData(xlux::RawPtr<ImDrawData> draw_data, xlux::Raw
 
         for (int i = 0; i < draw_list->VtxBuffer.Size; i++)
         {
-            vtx_dst[i].position = xlux::math::Vec2(draw_list->VtxBuffer[i].pos.x, draw_list->VtxBuffer[i].pos.y);
+            vtx_dst[i].position = xlux::math::Vec3(draw_list->VtxBuffer[i].pos.x, draw_list->VtxBuffer[i].pos.y, 0.0);
             vtx_dst[i].uv = xlux::math::Vec2(draw_list->VtxBuffer[i].uv.x, draw_list->VtxBuffer[i].uv.y);
             auto color = ImColor(draw_list->VtxBuffer[i].col);
             vtx_dst[i].color = xlux::math::Vec4(color.Value.x, color.Value.y, color.Value.z, color.Value.w);
@@ -295,16 +294,12 @@ void ImGui_ImplXlux_RenderDrawData(xlux::RawPtr<ImDrawData> draw_data, xlux::Raw
                 if (clip_max.x <= clip_min.x || clip_max.y <= clip_min.y)
                     continue;
 
-                // Apply scissor/clipping rectangle (Y is inverted in OpenGL)
-                // GL_CALL(glScissor((int)clip_min.x, (int)((float)fb_height - clip_max.y), (int)(clip_max.x - clip_min.x), (int)(clip_max.y - clip_min.y)));
-
 				renderer->SetViewport((int)clip_min.x, (int)((float)fb_height - clip_max.y), (int)(clip_max.x - clip_min.x), (int)(clip_max.y - clip_min.y));
 
                 // Bind texture, Draw
                 static_cast<xlux::RawPtr<ImGui_ImplXlux_FragmentShader>>(bd->XluxFragmentShader)->texture = (xlux::RawPtr<xlux::Texture2D>)(intptr_t)pcmd->GetTexID();
 
-                //renderer->DrawIndexed(bd->VertexBuffer, bd->IndexBuffer, pcmd->ElemCount, pcmd->IdxOffset);
-                renderer->DrawIndexed(bd->VertexBuffer, bd->IndexBuffer, pcmd->ElemCount, pcmd->IdxOffset);
+                renderer->DrawIndexedOrdered(bd->VertexBuffer, bd->IndexBuffer, pcmd->ElemCount, pcmd->IdxOffset);
             }
         }
     }
