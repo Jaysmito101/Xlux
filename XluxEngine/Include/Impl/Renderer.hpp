@@ -24,9 +24,12 @@ namespace xlux
 		void Clear(Bool color = true, Bool depth = true);
 		void SetViewport(I32 x, I32 y, I32 width, I32 height);
 
-		void DrawIndexed(RawPtr<Buffer> vertexBuffer, RawPtr<Buffer> indexBuffer, U32 indexCount);
+		void DrawIndexed(RawPtr<Buffer> vertexBuffer, RawPtr<Buffer> indexBuffer, U32 indexCount, U32 indexOffset = 0);
 		
 		inline void SetClearColor(F32 r, F32 g, F32 b, F32 a) { m_ClearColor = { r, g, b, a }; }
+
+		inline RawPtr<Pipeline> GetActivePipeline() { return m_ActivePipeline; }
+		inline Viewport GetActiveViewport() { return m_ActiveViewport.value(); }
 
 		friend class Device;
 	private:

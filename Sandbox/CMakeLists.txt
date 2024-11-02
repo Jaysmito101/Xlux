@@ -71,6 +71,7 @@ add_executable(07_imgui
     ./Vendor/imgui/backends/imgui_impl_win32.cpp
 )
 target_link_libraries(07_imgui imgui)
+target_compile_definitions(07_imgui PRIVATE XLUX_USE_IMGUI)
 
 if (WIN32)
     add_compile_definitions(

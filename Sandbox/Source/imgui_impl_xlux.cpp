@@ -34,13 +34,85 @@ struct ImGui_ImplXlux_Data
 {
     xlux::RawPtr<xlux::Device>        XluxDevice;
     xlux::RawPtr<xlux::Pipeline>      XluxPipeline;
+    xlux::RawPtr<xlux::IShader>       XluxVertexShader;
+    xlux::RawPtr<xlux::IShader>       XluxFragmentShader;
 
     xlux::RawPtr<xlux::Texture2D>     FontTexture;
     xlux::RawPtr<xlux::Buffer>        FontTextureBuffer;
     xlux::RawPtr<xlux::DeviceMemory>  FontTextureMemory;
 
 
+    xlux::RawPtr<xlux::Buffer>        VertexBuffer;
+    xlux::RawPtr<xlux::Buffer>        IndexBuffer;
+    xlux::RawPtr<xlux::DeviceMemory>  VertexIndexBufferMemory;
+
     ImGui_ImplXlux_Data() { memset((void*)this, 0, sizeof(*this)); }
+};
+
+
+struct ImGui_ImplXlux_VertexInData
+{
+	xlux::math::Vec2 position;
+	xlux::math::Vec2 uv;
+    xlux::math::Vec4 color;
+
+	ImGui_ImplXlux_VertexInData(xlux::math::Vec2 position, xlux::math::Vec2 uv, xlux::math::Vec4 color)
+		: position(position), uv(uv), color(color)
+	{}
+};
+
+struct ImGui_ImplXlux_VertexOutData
+{
+	xlux::math::Vec2 frag_uv;
+	xlux::math::Vec4 frag_color;
+
+    ImGui_ImplXlux_VertexOutData()
+        : frag_uv(xlux::math::Vec2(0.0f, 0.0f)), frag_color(xlux::math::Vec4(0.0f, 0.0f, 0.0f, 0.0f))
+    {}
+
+    ImGui_ImplXlux_VertexOutData(xlux::math::Vec2 frag_uv, xlux::math::Vec4 frag_color)
+        : frag_uv(frag_uv), frag_color(frag_color)
+    {}
+
+	inline auto Scaled(xlux::F32 scale) const
+	{
+		return ImGui_ImplXlux_VertexOutData(frag_uv * scale, frag_color * scale);
+	}
+
+	inline void Add(const ImGui_ImplXlux_VertexOutData& other)
+	{
+		frag_uv += other.frag_uv;
+		frag_color += other.frag_color;
+	}
+};
+
+class ImGui_ImplXlux_VertexShader : public xlux::IShaderG<ImGui_ImplXlux_VertexInData, ImGui_ImplXlux_VertexOutData>
+{
+public:
+    xlux::math::Mat4x4 proj_mtx;
+
+	xlux::Bool Execute(const xlux::RawPtr<ImGui_ImplXlux_VertexInData> dataIn, xlux::RawPtr<ImGui_ImplXlux_VertexOutData> dataOut, xlux::RawPtr<xlux::ShaderBuiltIn> builtIn)
+	{
+		dataOut->frag_uv = dataIn->uv;
+		dataOut->frag_color = dataIn->color;
+		builtIn->Position = proj_mtx.Mul(xlux::math::Vec4(dataIn->position, 0.0f, 1.0f));
+		return true;
+	}
+};
+
+class ImGui_ImplXlux_FragmentShader : public xlux::IShaderG<ImGui_ImplXlux_VertexOutData, xlux::FragmentShaderOutput>
+{
+public:
+    xlux::RawPtr<xlux::Texture2D> texture = nullptr;
+
+public:
+	xlux::Bool Execute(const xlux::RawPtr<ImGui_ImplXlux_VertexOutData> dataIn, xlux::RawPtr<xlux::FragmentShaderOutput> dataOut, xlux::RawPtr<xlux::ShaderBuiltIn> builtIn)
+	{
+		(void)builtIn; // unused
+		dataOut->Color[0] = dataIn->frag_color * texture->Sample(xlux::math::Vec3(dataIn->frag_uv, 0.0f));
+        dataOut->Color[0][3] *= 0.2f;
+		return true;
+	}
 };
 
 // Backend data stored in io.BackendRendererUserData to allow support for multiple Dear ImGui contexts
@@ -134,90 +206,161 @@ void ImGui_ImplXlux_DestroyFontsTexture()
     }
 }
 
-void ImGui_ImplXlux_RenderDrawData(xlux::RawPtr<ImDrawData> draw_data)
+
+static void ImGui_ImplXlux_SetupRenderState(xlux::RawPtr<ImDrawData> draw_data, xlux::RawPtr<xlux::Renderer> renderer)
 {
-    (void)draw_data;
-    xlux::log::Warn("ImGui_ImplXlux_RenderDrawData not implemented");
+    auto bd = ImGui_ImplXlux_GetBackendData();
+    // Setup viewport, orthographic projection matrix
+    // Our visible imgui space lies from draw_data->DisplayPos (top left) to draw_data->DisplayPos+data_data->DisplaySize (bottom right). DisplayPos is (0,0) for single viewport apps.
+    float L = draw_data->DisplayPos.x;
+    float R = draw_data->DisplayPos.x + draw_data->DisplaySize.x;
+    float T = draw_data->DisplayPos.y;
+    float B = draw_data->DisplayPos.y + draw_data->DisplaySize.y;
+    static_cast<xlux::RawPtr<ImGui_ImplXlux_VertexShader>>(bd->XluxVertexShader)->proj_mtx
+        = xlux::math::Mat4x4::Orthographic(L, R, B, T, 0.01f, 1000.0f);
+	renderer->BindPipeline(bd->XluxPipeline);
+}
+
+void ImGui_ImplXlux_RenderDrawData(xlux::RawPtr<ImDrawData> draw_data, xlux::RawPtr<xlux::Renderer> renderer)
+{
+     // Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
+    int fb_width = (int)(draw_data->DisplaySize.x * draw_data->FramebufferScale.x);
+    int fb_height = (int)(draw_data->DisplaySize.y * draw_data->FramebufferScale.y);
+    if (fb_width <= 0 || fb_height <= 0)
+        return;
+
+    // backup state
+    auto current_pipeline = renderer->GetActivePipeline();
+    auto viewport = renderer->GetActiveViewport();
+
+    auto bd = ImGui_ImplXlux_GetBackendData();
+
+
+    ImGui_ImplXlux_SetupRenderState(draw_data, renderer);
+
+    // Will project scissor/clipping rectangles into framebuffer space
+    ImVec2 clip_off = draw_data->DisplayPos;         // (0,0) unless using multi-viewports
+    ImVec2 clip_scale = draw_data->FramebufferScale; // (1,1) unless using retina display which are often (2,2)
+
+    // Render command lists
+    for (int n = 0; n < draw_data->CmdListsCount; n++)
+    {
+        const auto draw_list = draw_data->CmdLists[n];
+
+        auto vertex_buffer_size = draw_list->VtxBuffer.Size * sizeof(ImGui_ImplXlux_VertexInData);
+        auto index_buffer_size = draw_list->IdxBuffer.Size * sizeof(xlux::U32);
+        if (bd->VertexBuffer->GetSize() < vertex_buffer_size || bd->IndexBuffer->GetSize() < index_buffer_size)
+        {
+            ImGui_ImplXlux_RecreateVtxIdxBuffers(vertex_buffer_size, index_buffer_size);
+        }
+
+        auto vtx_dst = static_cast<ImGui_ImplXlux_VertexInData*>(bd->VertexBuffer->Map(vertex_buffer_size, 0));
+        auto idx_dst = static_cast<xlux::U32*>(bd->IndexBuffer->Map(index_buffer_size, 0));
+
+        for (int i = 0; i < draw_list->VtxBuffer.Size; i++)
+        {
+            vtx_dst[i].position = xlux::math::Vec2(draw_list->VtxBuffer[i].pos.x, draw_list->VtxBuffer[i].pos.y);
+            vtx_dst[i].uv = xlux::math::Vec2(draw_list->VtxBuffer[i].uv.x, draw_list->VtxBuffer[i].uv.y);
+            auto color = ImColor(draw_list->VtxBuffer[i].col);
+            vtx_dst[i].color = xlux::math::Vec4(color.Value.x, color.Value.y, color.Value.z, color.Value.w);
+        }
+
+        for (int i = 0; i < draw_list->IdxBuffer.Size / 3; i++)
+        {
+            idx_dst[i * 3 + 2] = draw_list->IdxBuffer[i * 3 + 0];
+            idx_dst[i * 3 + 1] = draw_list->IdxBuffer[i * 3 + 1];
+            idx_dst[i * 3 + 0] = draw_list->IdxBuffer[i * 3 + 2];
+        }
+
+        bd->VertexBuffer->Unmap();
+        bd->IndexBuffer->Unmap();
+
+        for (int cmd_i = 0; cmd_i < draw_list->CmdBuffer.Size; cmd_i++)
+        {
+            const ImDrawCmd* pcmd = &draw_list->CmdBuffer[cmd_i];
+            if (pcmd->UserCallback != nullptr)
+            {
+                // User callback, registered via ImDrawList::AddCallback()
+                // (ImDrawCallback_ResetRenderState is a special callback value used by the user to request the renderer to reset render state.)
+                if (pcmd->UserCallback == ImDrawCallback_ResetRenderState)
+                    ImGui_ImplXlux_SetupRenderState(draw_data, renderer);
+                else
+                    pcmd->UserCallback(draw_list, pcmd);
+            }
+            else
+            {
+                // Project scissor/clipping rectangles into framebuffer space
+                ImVec2 clip_min((pcmd->ClipRect.x - clip_off.x) * clip_scale.x, (pcmd->ClipRect.y - clip_off.y) * clip_scale.y);
+                ImVec2 clip_max((pcmd->ClipRect.z - clip_off.x) * clip_scale.x, (pcmd->ClipRect.w - clip_off.y) * clip_scale.y);
+                if (clip_max.x <= clip_min.x || clip_max.y <= clip_min.y)
+                    continue;
+
+                // Apply scissor/clipping rectangle (Y is inverted in OpenGL)
+                // GL_CALL(glScissor((int)clip_min.x, (int)((float)fb_height - clip_max.y), (int)(clip_max.x - clip_min.x), (int)(clip_max.y - clip_min.y)));
+
+				renderer->SetViewport((int)clip_min.x, (int)((float)fb_height - clip_max.y), (int)(clip_max.x - clip_min.x), (int)(clip_max.y - clip_min.y));
+
+                // Bind texture, Draw
+                static_cast<xlux::RawPtr<ImGui_ImplXlux_FragmentShader>>(bd->XluxFragmentShader)->texture = (xlux::RawPtr<xlux::Texture2D>)(intptr_t)pcmd->GetTexID();
+
+                //renderer->DrawIndexed(bd->VertexBuffer, bd->IndexBuffer, pcmd->ElemCount, pcmd->IdxOffset);
+                renderer->DrawIndexed(bd->VertexBuffer, bd->IndexBuffer, pcmd->ElemCount, pcmd->IdxOffset);
+            }
+        }
+    }
+
+	// Restore pipeline
+	renderer->BindPipeline(current_pipeline);
+	renderer->SetViewport(viewport.x, viewport.y, viewport.width, viewport.height);
+
 }
 
 
-struct ImGui_ImplXlux_VertexInData
+bool ImGui_ImplXlux_RecreateVtxIdxBuffers(xlux::Size vertex_buffer_size, xlux::Size index_buffer_size) 
 {
-	xlux::math::Vec2 position;
-	xlux::math::Vec2 uv;
-    xlux::math::Vec4 color;
+    auto bd = ImGui_ImplXlux_GetBackendData();
 
-	ImGui_ImplXlux_VertexInData(xlux::math::Vec2 position, xlux::math::Vec2 uv, xlux::math::Vec4 color)
-		: position(position), uv(uv), color(color)
-	{}
-};
+    if (bd->VertexBuffer) { bd->XluxDevice->DestroyBuffer(bd->VertexBuffer); bd->VertexBuffer = nullptr; }
+    if (bd->IndexBuffer) { bd->XluxDevice->DestroyBuffer(bd->IndexBuffer); bd->IndexBuffer = nullptr; }
+    if (bd->VertexIndexBufferMemory) { bd->XluxDevice->FreeMemory(bd->VertexIndexBufferMemory); bd->VertexIndexBufferMemory = nullptr; }
 
-struct ImGui_ImplXlux_VertexOutData
-{
-	xlux::math::Vec2 frag_uv;
-	xlux::math::Vec4 frag_color;
+    bd->VertexBuffer = bd->XluxDevice->CreateBuffer(vertex_buffer_size);
+    bd->IndexBuffer = bd->XluxDevice->CreateBuffer(index_buffer_size);
+    bd->VertexIndexBufferMemory = bd->XluxDevice->AllocateMemory(vertex_buffer_size + index_buffer_size);
 
-    ImGui_ImplXlux_VertexOutData()
-        : frag_uv(xlux::math::Vec2(0.0f, 0.0f)), frag_color(xlux::math::Vec4(0.0f, 0.0f, 0.0f, 0.0f))
-    {}
+    bd->IndexBuffer->BindMemory(bd->VertexIndexBufferMemory, 0);
+	bd->VertexBuffer->BindMemory(bd->VertexIndexBufferMemory, bd->IndexBuffer->GetSize());
 
-    ImGui_ImplXlux_VertexOutData(xlux::math::Vec2 frag_uv, xlux::math::Vec4 frag_color)
-        : frag_uv(frag_uv), frag_color(frag_color)
-    {}
-
-	inline auto Scaled(xlux::F32 scale) const
-	{
-		return ImGui_ImplXlux_VertexOutData(frag_uv * scale, frag_color * scale);
-	}
-
-	inline void Add(const ImGui_ImplXlux_VertexOutData& other)
-	{
-		frag_uv += other.frag_uv;
-		frag_color += other.frag_color;
-	}
-};
-
-class ImGui_ImplXlux_VertexShader : public xlux::IShaderG<ImGui_ImplXlux_VertexInData, ImGui_ImplXlux_VertexOutData>
-{
-public:
-    xlux::math::Mat4x4 proj_mtx;
-
-	xlux::Bool Execute(const xlux::RawPtr<ImGui_ImplXlux_VertexInData> dataIn, xlux::RawPtr<ImGui_ImplXlux_VertexOutData> dataOut, xlux::RawPtr<xlux::ShaderBuiltIn> builtIn)
-	{
-		dataOut->frag_uv = dataIn->uv;
-		dataOut->frag_color = dataIn->color;
-		builtIn->Position = proj_mtx.Mul(xlux::math::Vec4(dataIn->position, 0.0f, 1.0f));
-		return true;
-	}
-};
-
-class ImGui_ImplXlux_FragmentShader : public xlux::IShaderG<ImGui_ImplXlux_VertexOutData, xlux::FragmentShaderOutput>
-{
-public:
-	xlux::RawPtr<xlux::Texture2D> texture;
-
-public:
-	xlux::Bool Execute(const xlux::RawPtr<ImGui_ImplXlux_VertexOutData> dataIn, xlux::RawPtr<xlux::FragmentShaderOutput> dataOut, xlux::RawPtr<xlux::ShaderBuiltIn> builtIn)
-	{
-		(void)builtIn; // unused
-		dataOut->Color[0] = dataIn->frag_color * texture->Sample(xlux::math::Vec3(dataIn->frag_uv, 0.0f));
-		return true;
-	}
-};
+    return true;
+}
 
 bool ImGui_ImplXlux_CreateDeviceObjects()
 {
     auto bd = ImGui_ImplXlux_GetBackendData();
 
+    // DO NOT FREE THESE! They are managed by bd->XluxPipeline
+    bd->XluxVertexShader = xlux::CreateRawPtr<ImGui_ImplXlux_VertexShader>();
+    bd->XluxFragmentShader = xlux::CreateRawPtr<ImGui_ImplXlux_FragmentShader>();
+
     auto pipeline_create_info = xlux::PipelineCreateInfo()
-        .SetShader(xlux::CreateRawPtr<ImGui_ImplXlux_VertexShader>(), xlux::ShaderStage_Vertex)
-        .SetShader(xlux::CreateRawPtr<ImGui_ImplXlux_FragmentShader>(), xlux::ShaderStage_Fragment)
+        .SetShader(bd->XluxVertexShader, xlux::ShaderStage_Vertex)
+        .SetShader(bd->XluxFragmentShader, xlux::ShaderStage_Fragment)
         .SetInterpolator(xlux::CreateRawPtr<xlux::BasicInterpolator<ImGui_ImplXlux_VertexOutData>>())
 		.SetVertexItemSize(sizeof(ImGui_ImplXlux_VertexInData))
-		.SetVertexToFragmentDataSize(sizeof(ImGui_ImplXlux_VertexOutData));
+		.SetVertexToFragmentDataSize(sizeof(ImGui_ImplXlux_VertexOutData))
+        .SetBlendEnable(true)
+        .SetBlendEquation(xlux::EBlendEquation::BlendMode_Add)
+        .SetSrcBlendFunction(xlux::EBlendFunction::BlendFunction_SrcAlpha)
+        .SetDstBlendFunction(xlux::EBlendFunction::BlendFunction_OneMinusSrcAlpha)
+		.SetSrcBlendFunctionAlpha(xlux::EBlendFunction::BlendFunction_One)
+		.SetDstBlendFunctionAlpha(xlux::EBlendFunction::BlendFunction_OneMinusSrcAlpha)
+        .SetBackfaceCullingEnable(false)
+        .SetDepthTestEnable(false)
+        .SetClippingEnable(false);        
 
     bd->XluxPipeline = bd->XluxDevice->CreatePipeline(pipeline_create_info);
 
+    ImGui_ImplXlux_RecreateVtxIdxBuffers(10000, 10000);
     ImGui_ImplXlux_CreateFontsTexture();
 
     return true;
@@ -228,6 +371,9 @@ void ImGui_ImplXlux_DestroyDeviceObjects()
     auto bd = ImGui_ImplXlux_GetBackendData();
 
     if (bd->XluxPipeline) { bd->XluxDevice->DestroyPipeline(bd->XluxPipeline); bd->XluxPipeline = nullptr; }
+    if (bd->VertexBuffer) { bd->XluxDevice->DestroyBuffer(bd->VertexBuffer); bd->VertexBuffer = nullptr; }  
+    if (bd->IndexBuffer) { bd->XluxDevice->DestroyBuffer(bd->IndexBuffer); bd->IndexBuffer = nullptr; }
+    if (bd->VertexIndexBufferMemory) { bd->XluxDevice->FreeMemory(bd->VertexIndexBufferMemory); bd->VertexIndexBufferMemory = nullptr; }
 
 
     ImGui_ImplXlux_DestroyFontsTexture();

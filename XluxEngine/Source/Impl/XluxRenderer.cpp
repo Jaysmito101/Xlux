@@ -151,7 +151,7 @@ namespace xlux
 
 
 
-	void Renderer::DrawIndexed(RawPtr<Buffer> vertexBuffer, RawPtr<Buffer> indexBuffer, U32 indexCount)
+	void Renderer::DrawIndexed(RawPtr<Buffer> vertexBuffer, RawPtr<Buffer> indexBuffer, U32 indexCount, U32 indexOffset)
 	{
 #if defined(XLUX_VERY_STRICT_CHECKS)
 		if (!m_IsInFrame)
@@ -199,7 +199,7 @@ namespace xlux
 
 		for (auto i = 0; i < static_cast<I32>(indexCount); i += 3)
 		{
-			m_VertexShaderThreadPool->AddJob({ i });
+			m_VertexShaderThreadPool->AddJob({ static_cast<I32>(indexOffset) + i });
 		}
 
 
@@ -227,10 +227,20 @@ namespace xlux
 		{
 			for (auto x = 0; x < k_FragmentShaderWorkerCountX; ++x)
 			{
-				input.startX = static_cast<I32>(x * m_FragmentShaderTileWidth);
-				input.startY = static_cast<I32>(y * m_FragmentShaderTileHeight);
+				input.startX = std::max(static_cast<I32>(x * m_FragmentShaderTileWidth), m_ActiveViewport.value().x);
+				input.startY = std::max(static_cast<I32>(y * m_FragmentShaderTileHeight), m_ActiveViewport.value().y);
 				input.width = static_cast<I32>(m_FragmentShaderTileWidth);
 				input.height = static_cast<I32>(m_FragmentShaderTileHeight);
+
+				if ((I32)input.width + (I32)input.startX > m_ActiveViewport.value().x + m_ActiveViewport.value().width)
+				{
+					input.width = m_ActiveViewport.value().x + m_ActiveViewport.value().width - input.startX;
+				}
+
+				if ((I32)input.height + (I32)input.startY > m_ActiveViewport.value().y + m_ActiveViewport.value().height)
+				{
+					input.height = m_ActiveViewport.value().y + m_ActiveViewport.value().height - input.startY;
+				}
 
 				if (boundingBox[0] >= input.startX + input.width || boundingBox[2] <= input.startX ||
 					boundingBox[1] >= input.startY + input.height || boundingBox[3] <= input.startY)

@@ -57,6 +57,8 @@ namespace xlux
 		EBlendEquation blendEquation = BlendMode_Add;
 		EBlendFunction srcBlendFunction = BlendFunction_SrcAlpha;
 		EBlendFunction dstBlendFunction = BlendFunction_OneMinusSrcAlpha;
+		EBlendFunction srcBlendFunctionAlpha = BlendFunction_One;
+		EBlendFunction dstBlendFunctionAlpha = BlendFunction_Zero;
 
 		ECompareFunction depthCompareFunction = CompareFunction_Less;
 
@@ -132,6 +134,18 @@ namespace xlux
 		PipelineCreateInfo& SetDstBlendFunction(EBlendFunction function)
 		{
 			dstBlendFunction = function;
+			return *this;
+		}
+
+		PipelineCreateInfo& SetSrcBlendFunctionAlpha(EBlendFunction function)
+		{
+			srcBlendFunctionAlpha = function;
+			return *this;
+		}
+
+		PipelineCreateInfo& SetDstBlendFunctionAlpha(EBlendFunction function)
+		{
+			dstBlendFunctionAlpha = function;
 			return *this;
 		}
 

@@ -3,6 +3,12 @@
 #define RGBA(r, g, b, a) ((b) | ((g) << 8) | ((r) << 16) | ((a) << 24))
 
 
+#ifdef XLUX_USE_IMGUI
+#include "imgui.h"
+#include "Windows.h"
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+#endif
+
 #include "Window.hpp"
 
 xlux::RawPtr<Window> Window::s_Instance = nullptr;
@@ -113,6 +119,11 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		break;
 	}
 	default:
+#ifdef XLUX_USE_IMGUI
+		if (Window::IsImGuiInialized()) {
+			ImGui_ImplWin32_WndProcHandler(hwnd, message, wParam, lParam);
+		}
+#endif
 		return DefWindowProc(hwnd, message, wParam, lParam);
 	}
 	return 0;

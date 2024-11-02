@@ -28,6 +28,11 @@ public:
 	inline static void SetHeight(xlux::I32 height) { s_Instance->m_Height = height; }
 	inline static xlux::RawPtr<WindowFramebuffer> GetFramebuffer() { return s_Instance->m_Framebuffer; }
 
+#ifdef XLUX_USE_IMGUI
+	inline static void InitializeImGui() { s_Instance->m_ImGuiInitialized = true; }
+	inline static bool IsImGuiInialized() { return s_Instance->m_ImGuiInitialized; }
+#endif
+
 private:
 	Window(const xlux::String& title, xlux::I32 width, xlux::I32 height);
 	~Window();
@@ -36,6 +41,10 @@ private:
 	xlux::String m_Title;
 	xlux::I32 m_Width, m_Height;
 	xlux::RawPtr<WindowFramebuffer> m_Framebuffer;
+
+#ifdef XLUX_USE_IMGUI
+	bool m_ImGuiInitialized = false;
+#endif
 
 	static xlux::RawPtr<Window> s_Instance;
 };

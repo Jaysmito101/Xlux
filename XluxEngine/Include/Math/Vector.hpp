@@ -338,6 +338,15 @@ namespace xlux
 				return *this / Length();
 			}
 
+			XLUX_FORCE_INLINE auto Clamp(ValueTypeT minValue, ValueTypeT maxValue) const 
+			{
+				Vec<N, ValueTypeT> result;
+				for (auto i = 0; i < N; i++) {
+					result[i] = std::clamp((*this)[i], minValue, maxValue);
+				}
+				return result;
+			}
+
 			XLUX_FORCE_INLINE void Normalize()
 			{
 				*this /= Length();

@@ -54,8 +54,8 @@ namespace xlux
 		auto boundingBox = payload.triangle.GetBoundingBox();
 		// boundingBox *= math::Vec4(static_cast<F32>(m_Framebuffer->GetWidth()), static_cast<F32>(m_Framebuffer->GetHeight()), static_cast<F32>(m_Framebuffer->GetWidth()), static_cast<F32>(m_Framebuffer->GetHeight()));
 		
-		const auto startX = std::max(payload.startX, static_cast<U32>(boundingBox[0]) - 1);
-		const auto startY = std::max(payload.startY, static_cast<U32>(boundingBox[1]) - 1);
+		const auto startX = std::max(payload.startX, static_cast<U32>(std::max(boundingBox[0] - 1.0, 0.0)));
+		const auto startY = std::max(payload.startY, static_cast<U32>(std::max(boundingBox[1] - 1.0, 0.0)));
 		const auto endX = std::min (payload.startX + payload.width, static_cast<U32>(boundingBox[2]) + 1);
 		const auto endY = std::min (payload.startY + payload.height, static_cast<U32>(boundingBox[3]) + 1);
 
@@ -76,6 +76,7 @@ namespace xlux
 			{
 				auto p = math::Vec2((F32)x, (F32)y);
 				// auto p = math::Vec2((F32)x / framebuffer->GetWidth(), (F32)y / framebuffer->GetHeight());
+
 				if (PointInTriangle(p, p0, p1, p2))
 				{
 					auto baycentric = CalculateBarycentric(p, p0, p1, p2);
@@ -189,24 +190,41 @@ namespace xlux
 				auto blendEquation = m_Pipeline->m_CreateInfo.blendEquation;
 				auto srcBelndFunc = m_Pipeline->m_CreateInfo.srcBlendFunction;
 				auto dstBlendFunc = m_Pipeline->m_CreateInfo.dstBlendFunction;
+				auto srcAlphaBlendFunc = m_Pipeline->m_CreateInfo.srcBlendFunctionAlpha;
+				auto dstAlphaBlendFunc = m_Pipeline->m_CreateInfo.dstBlendFunctionAlpha;
 				F32 srcBlendFactor = CalculateBlendFactor(srcColor[3], dstColor[3], srcBelndFunc);
 				F32 dstBlendFactor = CalculateBlendFactor(srcColor[3], dstColor[3], dstBlendFunc);
+				F32 srcAlphaBlendFactor = CalculateBlendFactor(srcColor[3], dstColor[3], srcAlphaBlendFunc);
+				F32 dstAlphaBlendFactor = CalculateBlendFactor(srcColor[3], dstColor[3], dstAlphaBlendFunc);
+
+				if (srcColor[3] < 0.5) {
+					std::cout << "";
+				}
 
 				switch (blendEquation)
 				{
 				case xlux::BlendMode_Add:
 				{
-					blendedColor = srcColor * srcBlendFactor + dstColor * dstBlendFactor;
+					blendedColor[0] = srcColor[0] * srcBlendFactor + dstColor[0] * dstBlendFactor;
+					blendedColor[1] = srcColor[1] * srcBlendFactor + dstColor[1] * dstBlendFactor;
+					blendedColor[2] = srcColor[2] * srcBlendFactor + dstColor[2] * dstBlendFactor;
+					blendedColor[3] = srcColor[3] * srcAlphaBlendFactor + dstColor[3] * dstAlphaBlendFactor;
 					break;
 				}
 				case xlux::BlendMode_Subtract:
 				{
-					blendedColor = srcColor * srcBlendFactor - dstColor * dstBlendFactor;
+					blendedColor[0] = srcColor[0] * srcBlendFactor - dstColor[0] * dstBlendFactor;
+					blendedColor[1] = srcColor[1] * srcBlendFactor - dstColor[1] * dstBlendFactor;
+					blendedColor[2] = srcColor[2] * srcBlendFactor - dstColor[2] * dstBlendFactor;
+					blendedColor[3] = srcColor[3] * srcAlphaBlendFactor - dstColor[3] * dstAlphaBlendFactor;
 					break;
 				}
 				case xlux::BlendMode_ReverseSubtract:
 				{
-					blendedColor = dstColor * dstBlendFactor - srcColor * srcBlendFactor;
+					blendedColor[0] = dstColor[0] * dstBlendFactor - srcColor[0] * srcBlendFactor;
+					blendedColor[1] = dstColor[1] * dstBlendFactor - srcColor[1] * srcBlendFactor;
+					blendedColor[2] = dstColor[2] * dstBlendFactor - srcColor[2] * srcBlendFactor;
+					blendedColor[3] = dstColor[3] * dstAlphaBlendFactor - srcColor[3] * srcAlphaBlendFactor;
 					break;
 				}
 				case xlux::BlendMode_Min:
@@ -214,7 +232,7 @@ namespace xlux
 					blendedColor[0] = std::min(srcColor[0] * srcBlendFactor, dstColor[0] * dstBlendFactor);
 					blendedColor[1] = std::min(srcColor[1] * srcBlendFactor, dstColor[1] * dstBlendFactor);
 					blendedColor[2] = std::min(srcColor[2] * srcBlendFactor, dstColor[2] * dstBlendFactor);
-					blendedColor[3] = std::min(srcColor[3] * srcBlendFactor, dstColor[3] * dstBlendFactor);
+					blendedColor[3] = std::min(srcColor[3] * srcAlphaBlendFactor, dstColor[3] * dstAlphaBlendFactor);
 					break;
 				}
 				case xlux::BlendMode_Max:
@@ -222,7 +240,7 @@ namespace xlux
 					blendedColor[0] = std::max(srcColor[0] * srcBlendFactor, dstColor[0] * dstBlendFactor);
 					blendedColor[1] = std::max(srcColor[1] * srcBlendFactor, dstColor[1] * dstBlendFactor);
 					blendedColor[2] = std::max(srcColor[2] * srcBlendFactor, dstColor[2] * dstBlendFactor);
-					blendedColor[3] = std::max(srcColor[3] * srcBlendFactor, dstColor[3] * dstBlendFactor);
+					blendedColor[3] = std::max(srcColor[3] * srcAlphaBlendFactor, dstColor[3] * dstAlphaBlendFactor);
 					break;
 				}
 				default:

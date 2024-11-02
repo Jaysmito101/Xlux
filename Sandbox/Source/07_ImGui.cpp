@@ -75,6 +75,8 @@ int main()
 	ImGui_ImplWin32_InitForOpenGL(Window::GetRawHandle());
 	ImGui_ImplXlux_Init(device);
 
+	Window::InitializeImGui();
+
 	auto vertexShader = xlux::CreateRawPtr<HelloWorldVShader>();
 	auto fragmentShader = xlux::CreateRawPtr<HelloWorldFShader>();
 	auto interpolator = xlux::CreateRawPtr<xlux::BasicInterpolator<VertexOutData>>();
@@ -131,18 +133,28 @@ int main()
 		renderer->SetClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 		renderer->Clear();
 		renderer->BindPipeline(pipeline);
+
 		renderer->DrawIndexed(vertexBuffer, indexBuffer, static_cast<xlux::U32>(indices.size()));
 
 
 		ImGui_ImplXlux_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
-		ImGui::ShowDemoWindow();
-		ImGui::Render();
-
-		ImGui_ImplXlux_RenderDrawData(ImGui::GetDrawData());
 		
+		// increase global size to 5
+		ImGui::GetIO().FontGlobalScale = 4.0f;
 
+		if (ImGui::Begin("asdasd")) {
+			ImGui::Text("Hello wrold!");
+			ImGui::Text("Hello wrold!");
+			ImGui::Image(ImGui::GetIO().Fonts->TexID, ImVec2(1024, 256));
+			ImGui::End();
+		}
+
+		ImGui::ShowDemoWindow();
+		
+		ImGui::Render();
+		ImGui_ImplXlux_RenderDrawData(ImGui::GetDrawData(), renderer);
 		renderer->EndFrame();
 
 
