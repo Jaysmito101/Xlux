@@ -32,7 +32,7 @@ Xlux can ideally be used as a library and extended to whatever usage desited wit
 * Parallel Shaders API
   - Vertex Stage
   - Fragment Stage
-* Klux Device (resource manager)
+* Xlux Device (resource manager)
 * Buffers & Device Memory
 * Textures Support
   - Texture 2D
@@ -75,6 +75,10 @@ The examples for this has been made similar to https://learnopengl.com/
 ### PBR [source](./Sandbox/Source/06_PBR.cpp)
 
 <img width=500 src="./Images/06_pbr.png" alt="PBR" />
+
+### ImGui Integration [source](./Sandbox/Source/07_ImGui.cpp)
+
+<img width=500 src="./Images/07_imgui.png" alt="PBR" />
 
 
 More comming soon...

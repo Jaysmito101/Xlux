@@ -57,6 +57,8 @@ namespace xlux
 		EBlendEquation blendEquation = BlendMode_Add;
 		EBlendFunction srcBlendFunction = BlendFunction_SrcAlpha;
 		EBlendFunction dstBlendFunction = BlendFunction_OneMinusSrcAlpha;
+		EBlendFunction srcBlendFunctionAlpha = BlendFunction_One;
+		EBlendFunction dstBlendFunctionAlpha = BlendFunction_Zero;
 
 		ECompareFunction depthCompareFunction = CompareFunction_Less;
 
@@ -66,6 +68,7 @@ namespace xlux
 		Bool rasterizerDiscardEnable = false;
 		Bool enableClipping = false;
 		Bool enableBackfaceCulling = false;
+
 
 		PipelineCreateInfo() = default;
 		~PipelineCreateInfo() = default;
@@ -135,6 +138,18 @@ namespace xlux
 			return *this;
 		}
 
+		PipelineCreateInfo& SetSrcBlendFunctionAlpha(EBlendFunction function)
+		{
+			srcBlendFunctionAlpha = function;
+			return *this;
+		}
+
+		PipelineCreateInfo& SetDstBlendFunctionAlpha(EBlendFunction function)
+		{
+			dstBlendFunctionAlpha = function;
+			return *this;
+		}
+
 		PipelineCreateInfo& SetDepthCompareFunction(ECompareFunction function)
 		{
 			depthCompareFunction = function;
@@ -164,9 +179,6 @@ namespace xlux
 			rasterizerDiscardEnable = enable;
 			return *this;
 		}
-
-
-
 	};
 
 	class XLUX_API Pipeline
@@ -182,6 +194,7 @@ namespace xlux
 
 		friend class VertexShaderWorker;
 		friend class FragmentShaderWorker;
+		friend class Renderer;
 	private:
 		PipelineCreateInfo m_CreateInfo;
 	};

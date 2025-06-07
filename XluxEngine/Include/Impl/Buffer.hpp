@@ -19,6 +19,9 @@ namespace xlux
 		inline Size GetSize() const { return m_Size; }
 		inline Size GetOffset() const { return m_Offset; }
 
+		inline void* Map(Size size, Size offset = 0) { return m_DeviceMemory->Map(m_Offset + offset, size); }
+		inline void Unmap() { m_DeviceMemory->Unmap(); }
+
 
 		friend class Device;
 		friend class VertexShaderWorker;

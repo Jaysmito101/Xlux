@@ -3,6 +3,12 @@
 #define RGBA(r, g, b, a) ((b) | ((g) << 8) | ((r) << 16) | ((a) << 24))
 
 
+#ifdef XLUX_USE_IMGUI
+#include "imgui.h"
+#include "Windows.h"
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+#endif
+
 #include "Window.hpp"
 
 xlux::RawPtr<Window> Window::s_Instance = nullptr;
@@ -113,6 +119,11 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		break;
 	}
 	default:
+#ifdef XLUX_USE_IMGUI
+		if (Window::IsImGuiInialized()) {
+			ImGui_ImplWin32_WndProcHandler(hwnd, message, wParam, lParam);
+		}
+#endif
 		return DefWindowProc(hwnd, message, wParam, lParam);
 	}
 	return 0;
@@ -180,6 +191,11 @@ Window::Window(const std::string& title, int width, int height)
 
 }
 
+
+void* Window::GetRawHandle() {
+	return s_WindowHandle;
+}
+
 xlux::Bool Window::HasClosed()
 {
 	return s_HasClosed;
@@ -190,7 +206,7 @@ void Window::Update()
 	MSG messages = { 0 };
 	while (PeekMessage(&messages, s_WindowHandle, 0, 0, PM_REMOVE))
 	{
-		// klux::log::Info("Mesage : {0}", Win32MessageToString(messages.message));
+		// xlux::log::Info("Mesage : {0}", Win32MessageToString(messages.message));
 		TranslateMessage(&messages);
 		DispatchMessage(&messages);
 	}

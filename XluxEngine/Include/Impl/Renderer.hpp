@@ -28,6 +28,9 @@ namespace xlux
 		
 		inline void SetClearColor(F32 r, F32 g, F32 b, F32 a) { m_ClearColor = { r, g, b, a }; }
 
+		inline RawPtr<Pipeline> GetActivePipeline() { return m_ActivePipeline; }
+		inline Viewport GetActiveViewport() { return m_ActiveViewport.value(); }
+
 		friend class Device;
 	private:
 		Renderer();

@@ -20,12 +20,18 @@ public:
 	static void Clear(xlux::F32 r, xlux::F32 g, xlux::F32 b, xlux::F32 a);
 	static void SetPixel(xlux::F32 x, xlux::F32 y, xlux::F32 r, xlux::F32 g, xlux::F32 b, xlux::F32 a);
 	static void SetTitle(const xlux::String& title);
+	static void* GetRawHandle();
 
 	inline static xlux::I32 GetWidth() { return s_Instance->m_Width; }
 	inline static xlux::I32 GetHeight(){ return s_Instance->m_Height; }
 	inline static void SetWidth(xlux::I32 width) { s_Instance->m_Width = width; }
 	inline static void SetHeight(xlux::I32 height) { s_Instance->m_Height = height; }
 	inline static xlux::RawPtr<WindowFramebuffer> GetFramebuffer() { return s_Instance->m_Framebuffer; }
+
+#ifdef XLUX_USE_IMGUI
+	inline static void InitializeImGui() { s_Instance->m_ImGuiInitialized = true; }
+	inline static bool IsImGuiInialized() { return s_Instance->m_ImGuiInitialized; }
+#endif
 
 private:
 	Window(const xlux::String& title, xlux::I32 width, xlux::I32 height);
@@ -35,6 +41,10 @@ private:
 	xlux::String m_Title;
 	xlux::I32 m_Width, m_Height;
 	xlux::RawPtr<WindowFramebuffer> m_Framebuffer;
+
+#ifdef XLUX_USE_IMGUI
+	bool m_ImGuiInitialized = false;
+#endif
 
 	static xlux::RawPtr<Window> s_Instance;
 };
@@ -53,6 +63,4 @@ public:
 
 	virtual void GetColorPixel(xlux::I32 channel, xlux::I32 x, xlux::I32 y, xlux::F32& r, xlux::F32& g, xlux::F32& b, xlux::F32& a) const;
 	virtual void GetDepthPixel(xlux::I32 x, xlux::I32 y, xlux::F32& depth) const;
-
-
 };

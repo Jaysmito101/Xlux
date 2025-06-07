@@ -1,6 +1,8 @@
 include_directories(
     ./Include
     ../XluxEngine/Include
+    ./Vendor/imgui
+    ./Vendor/imgui/backends
 )
 
 if (MSVC)
@@ -13,9 +15,9 @@ link_libraries(
     xluxengine-static
 )
 
-add_compile_definitions(
-    XLUX_DLL_IMPORT
-)
+# add_compile_definitions(
+#     XLUX_DLL_IMPORT
+# )
 
 
 add_executable(sandbox
@@ -59,6 +61,17 @@ add_executable(06_pbr
 	./Source/Win32_Window.cpp
 	./Source/WindowFramebuffer.cpp
 )
+
+add_subdirectory(./Vendor/imgui_cmake)
+add_executable(07_imgui
+	./Source/07_ImGui.cpp
+	./Source/Win32_Window.cpp
+	./Source/WindowFramebuffer.cpp
+    ./Source/imgui_impl_xlux.cpp
+    ./Vendor/imgui/backends/imgui_impl_win32.cpp
+)
+target_link_libraries(07_imgui imgui)
+target_compile_definitions(07_imgui PRIVATE XLUX_USE_IMGUI)
 
 if (WIN32)
     add_compile_definitions(
