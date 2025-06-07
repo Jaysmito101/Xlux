@@ -299,7 +299,7 @@ void ImGui_ImplXlux_RenderDrawData(xlux::RawPtr<ImDrawData> draw_data, xlux::Raw
                 // Bind texture, Draw
                 static_cast<xlux::RawPtr<ImGui_ImplXlux_FragmentShader>>(bd->XluxFragmentShader)->texture = (xlux::RawPtr<xlux::Texture2D>)(intptr_t)pcmd->GetTexID();
 
-                renderer->DrawIndexedOrdered(bd->VertexBuffer, bd->IndexBuffer, pcmd->ElemCount, pcmd->IdxOffset);
+                renderer->DrawIndexedOrdered(bd->VertexBuffer, bd->IndexBuffer, pcmd->ElemCount, 0, pcmd->IdxOffset);
             }
         }
     }

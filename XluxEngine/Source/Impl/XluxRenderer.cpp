@@ -150,7 +150,6 @@ namespace xlux
 	}
 
 
-
 	void Renderer::DrawIndexed(RawPtr<Buffer> vertexBuffer, RawPtr<Buffer> indexBuffer, U32 indexCount, U32 startingVertex, U32 startingIndex)
 	{
 #if defined(XLUX_VERY_STRICT_CHECKS)
@@ -199,7 +198,7 @@ namespace xlux
 
 		for (auto i = 0; i < static_cast<I32>(indexCount); i += 3)
 		{
-			m_VertexShaderThreadPool->AddJob({ static_cast<I32>(indexOffset) + i });
+			m_VertexShaderThreadPool->AddJob({ i });
 		}
 
 
@@ -208,7 +207,7 @@ namespace xlux
 		m_FragmentShaderThreadPool->WaitJobDone();
 	}
 
-	void Renderer::DrawIndexedOrdered(RawPtr<Buffer> vertexBuffer, RawPtr<Buffer> indexBuffer, U32 indexCount, U32 indexOffset)
+	void Renderer::DrawIndexedOrdered(RawPtr<Buffer> vertexBuffer, RawPtr<Buffer> indexBuffer, U32 indexCount, U32 startingVertex, U32 startingIndex)
 	{
 #if defined(XLUX_VERY_STRICT_CHECKS)
 		if (!m_IsInFrame)
@@ -246,8 +245,8 @@ namespace xlux
 
 		auto vertexShaderJob = reinterpret_cast<RawPtr<VertexShaderWorker>>(m_VertexShaderJob);
 
-		vertexShaderJob->SetIndexBuffer(indexBuffer);
-		vertexShaderJob->SetVertexBuffer(vertexBuffer);
+		vertexShaderJob->SetIndexBuffer(indexBuffer, startingIndex);
+		vertexShaderJob->SetVertexBuffer(vertexBuffer, startingVertex);
 		vertexShaderJob->SetPipeline(m_ActivePipeline);
 		vertexShaderJob->SetFramebuffer(m_ActiveFramebuffer);
 		vertexShaderJob->SetVertexToFragmentDataAllocator(m_VertexToFragmentDataAllocator);
@@ -256,7 +255,7 @@ namespace xlux
 
 		for (auto i = 0; i < static_cast<I32>(indexCount); i += 3)
 		{
-			m_VertexShaderThreadPool->AddJobTo({ static_cast<I32>(indexOffset) + i }, 0);
+			m_VertexShaderThreadPool->AddJobTo({ i }, 0);
 		}
 
 

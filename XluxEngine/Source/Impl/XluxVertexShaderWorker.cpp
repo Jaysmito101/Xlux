@@ -13,7 +13,7 @@ namespace xlux
 		(void)result;
 
 		const auto indexBufferPtr = m_IndexBuffer->GetDataPtrWithOffset(m_StartingIndex * sizeof(U32));
-		const auto vertexBufferPtr = m_VertexBuffer->GetDataPtrWithOffset(m_StartingIndex * m_Pipeline->m_CreateInfo.vertexItemSize);
+		const auto vertexBufferPtr = m_VertexBuffer->GetDataPtrWithOffset(m_StartingVertex * m_Pipeline->m_CreateInfo.vertexItemSize);
 
 		const U32 triangleIndex[3] = {
 			((U32*)indexBufferPtr)[payload.indexStart + 0],
@@ -34,7 +34,7 @@ namespace xlux
 		for (auto i = 0; i < 3; ++i)
 		{
 			seedTraingle.GetBuiltInRef(i)->Reset();
-			seedTraingle.GetBuiltInRef(i)->VertexIndex = payload.indexStart * 3 + i;
+			seedTraingle.GetBuiltInRef(i)->VertexIndex = ((I32)m_StartingIndex + payload.indexStart) * 3 + i;
 			m_Pipeline->m_CreateInfo.vertexShader->Execute(vertexData[i], seedTraingle.GetVertexData(i), seedTraingle.GetBuiltInRef(i));
 			seedTraingle.GetBuiltInRef(i)->Position /= seedTraingle.GetBuiltInRef(i)->Position[3];
 		}
@@ -88,7 +88,7 @@ namespace xlux
 		// if (m_Rasterizer) // this will be true if everything is ok so just skip the check for performance
 		{
 			// for (auto& triangle : triangles)
-			for (auto ti = 0 ; ti < triangleCount; ++ti)
+			for (auto ti = 0; ti < triangleCount; ++ti)
 			{
 				auto& triangle = triangles[ti];
 				// Transform NDC to Screen space
@@ -134,22 +134,22 @@ namespace xlux
 
 		auto distance = [&](const math::Vec3& point) {
 			return planeNormal.Dot(point - planePoint);
-		};
+			};
 
 		auto pushInsidePoint = [&](const math::Vec4& point, U32 index) {
 			insidePoints[insidePointsCount++] = { point, index };
-		};
+			};
 
 		auto pushOutsidePoint = [&](const math::Vec4& point, U32 index) {
 			outsidePoints[outsidePointsCount++] = { point, index };
-		};
+			};
 
 		auto pushPoint = [&](const math::Vec4& point, U32 index) {
 			if (distance(point) <= 0.0f)
 				pushInsidePoint(point, index);
 			else
 				pushOutsidePoint(point, index);
-		};
+			};
 
 		pushPoint(triangle.GetBuiltInRef(0)->Position, 0);
 		pushPoint(triangle.GetBuiltInRef(1)->Position, 1);

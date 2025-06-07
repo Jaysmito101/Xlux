@@ -25,7 +25,8 @@ namespace xlux
 		void SetViewport(I32 x, I32 y, I32 width, I32 height);
 
 		void DrawIndexed(RawPtr<Buffer> vertexBuffer, RawPtr<Buffer> indexBuffer, U32 indexCount, U32 startingVertex = 0, U32 startingIndex = 0);
-		
+		void DrawIndexedOrdered(RawPtr<Buffer> vertexBuffer, RawPtr<Buffer> indexBuffer, U32 indexCount, U32 startingVertex = 0, U32 startingIndex = 0);
+
 		inline void SetClearColor(F32 r, F32 g, F32 b, F32 a) { m_ClearColor = { r, g, b, a }; }
 
 		inline RawPtr<Pipeline> GetActivePipeline() { return m_ActivePipeline; }
