@@ -12,8 +12,8 @@ namespace xlux
 	{
 		(void)result;
 
-		const auto indexBufferPtr = m_IndexBuffer->GetDataPtr();
-		const auto vertexBufferPtr = m_VertexBuffer->GetDataPtr();
+		const auto indexBufferPtr = m_IndexBuffer->GetDataPtrWithOffset(m_StartingIndex * sizeof(U32));
+		const auto vertexBufferPtr = m_VertexBuffer->GetDataPtrWithOffset(m_StartingIndex * m_Pipeline->m_CreateInfo.vertexItemSize);
 
 		const U32 triangleIndex[3] = {
 			((U32*)indexBufferPtr)[payload.indexStart + 0],

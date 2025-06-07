@@ -151,7 +151,7 @@ namespace xlux
 
 
 
-	void Renderer::DrawIndexed(RawPtr<Buffer> vertexBuffer, RawPtr<Buffer> indexBuffer, U32 indexCount)
+	void Renderer::DrawIndexed(RawPtr<Buffer> vertexBuffer, RawPtr<Buffer> indexBuffer, U32 indexCount, U32 startingVertex, U32 startingIndex)
 	{
 #if defined(KLUX_VERY_STRICT_CHECKS)
 		if (!m_IsInFrame)
@@ -189,8 +189,8 @@ namespace xlux
 
 		auto vertexShaderJob = reinterpret_cast<RawPtr<VertexShaderWorker>>(m_VertexShaderJob);
 
-		vertexShaderJob->SetIndexBuffer(indexBuffer);
-		vertexShaderJob->SetVertexBuffer(vertexBuffer);
+		vertexShaderJob->SetIndexBuffer(indexBuffer, startingIndex);
+		vertexShaderJob->SetVertexBuffer(vertexBuffer, startingVertex);
 		vertexShaderJob->SetPipeline(m_ActivePipeline);
 		vertexShaderJob->SetFramebuffer(m_ActiveFramebuffer);
 		vertexShaderJob->SetVertexToFragmentDataAllocator(m_VertexToFragmentDataAllocator);

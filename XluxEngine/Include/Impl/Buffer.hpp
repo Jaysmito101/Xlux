@@ -28,6 +28,7 @@ namespace xlux
 		~Buffer();
 
 		void* GetDataPtr() const;
+		void* GetDataPtrWithOffset(Size offset) const;
 
 	private:
 		RawPtr<DeviceMemory> m_DeviceMemory = nullptr;

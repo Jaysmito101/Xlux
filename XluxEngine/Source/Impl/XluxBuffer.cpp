@@ -74,5 +74,9 @@ namespace xlux
 		return m_DeviceMemory->Map(m_Offset, m_Size);
 	}
 
+	void* Buffer::GetDataPtrWithOffset(Size offset) const
+	{
+		return m_DeviceMemory->Map(m_Offset + offset, m_Size);
+	}
 
 }

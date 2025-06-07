@@ -24,8 +24,8 @@ namespace xlux
 
 		Bool Execute(VertexShaderWorkerInput payload, U32& result, Size threadID) override;
 
-		inline void SetVertexBuffer(RawPtr<Buffer> buffer) { m_VertexBuffer = buffer; }
-		inline void SetIndexBuffer(RawPtr<Buffer> buffer) { m_IndexBuffer = buffer; }
+		inline void SetVertexBuffer(RawPtr<Buffer> buffer, Size startingVertex) { m_VertexBuffer = buffer; m_StartingVertex = startingVertex; }
+		inline void SetIndexBuffer(RawPtr<Buffer> buffer, Size startingIndex) { m_IndexBuffer = buffer; m_StartingIndex = startingIndex; }
 		inline void SetPipeline(RawPtr<Pipeline> pipeline) { m_Pipeline = pipeline; }
 		inline void SetVertexToFragmentDataAllocator(RawPtr<LinearAllocator> allocator) { m_VertexToFragmentDataAllocator = allocator; }
 		inline void SetFramebuffer(RawPtr<IFramebuffer> framebuffer) { m_Framebuffer = framebuffer; }
@@ -38,8 +38,13 @@ namespace xlux
 		Bool IsTriangleFacingCamera(const math::Vec4& v0, const math::Vec4& v1, const math::Vec4& v2);
 
 	private:
+		Size m_StartingVertex = 0;
+		Size m_StartingIndex = 0;
+
 		RawPtr<Buffer> m_VertexBuffer = nullptr;
 		RawPtr<Buffer> m_IndexBuffer = nullptr;
+		
+
 		RawPtr<Pipeline> m_Pipeline = nullptr;
 		RawPtr<IFramebuffer> m_Framebuffer = nullptr;
 		RawPtr<LinearAllocator> m_VertexToFragmentDataAllocator = nullptr;
