@@ -188,6 +188,74 @@ namespace xlux
 				return result;
 			}
 
+			XLUX_FORCE_INLINE auto FastInverse() const requires (M == 4 && N == 4)
+			{
+				const auto& A = *this; // Use A as a short-hand for this->
+
+				// This implementation is based on the Cramer's rule for 4x4 matrices,
+				// which computes the adjugate matrix and divides by the determinant.
+				// It's structured to reuse calculations for efficiency.
+
+				// Calculate cofactors of 2x2 submatrices for the first two rows
+				auto s0 = A.At(0, 0) * A.At(1, 1) - A.At(1, 0) * A.At(0, 1);
+				auto s1 = A.At(0, 0) * A.At(1, 2) - A.At(1, 0) * A.At(0, 2);
+				auto s2 = A.At(0, 0) * A.At(1, 3) - A.At(1, 0) * A.At(0, 3);
+				auto s3 = A.At(0, 1) * A.At(1, 2) - A.At(1, 1) * A.At(0, 2);
+				auto s4 = A.At(0, 1) * A.At(1, 3) - A.At(1, 1) * A.At(0, 3);
+				auto s5 = A.At(0, 2) * A.At(1, 3) - A.At(1, 2) * A.At(0, 3);
+
+				// Calculate cofactors of 2x2 submatrices for the last two rows
+				auto c5 = A.At(2, 2) * A.At(3, 3) - A.At(3, 2) * A.At(2, 3);
+				auto c4 = A.At(2, 1) * A.At(3, 3) - A.At(3, 1) * A.At(2, 3);
+				auto c3 = A.At(2, 1) * A.At(3, 2) - A.At(3, 1) * A.At(2, 2);
+				auto c2 = A.At(2, 0) * A.At(3, 3) - A.At(3, 0) * A.At(2, 3);
+				auto c1 = A.At(2, 0) * A.At(3, 2) - A.At(3, 0) * A.At(2, 2);
+				auto c0 = A.At(2, 0) * A.At(3, 1) - A.At(3, 0) * A.At(2, 1);
+
+				// Calculate determinant using cofactor expansion
+				auto det = s0 * c5 - s1 * c4 + s2 * c3 + s3 * c2 - s4 * c1 + s5 * c0;
+
+				// Check if the matrix is singular (non-invertible)
+				constexpr auto epsilon = 1e-100;
+				if (std::abs(det) < epsilon)
+				{
+					xlux::log::Warn("Matrix is singular, cannot be inverted. Returning identity matrix.");
+					return Mat<M, N, ValueTypeT>::Identity();
+				}
+
+				auto invDet = ValueTypeT(1) / det;
+				Mat<M, N, ValueTypeT> inv;
+
+				inv.At(0, 0) = (A.At(1, 1) * c5 - A.At(1, 2) * c4 + A.At(1, 3) * c3) * invDet;
+				inv.At(0, 1) = (-A.At(0, 1) * c5 + A.At(0, 2) * c4 - A.At(0, 3) * c3) * invDet;
+				inv.At(0, 2) = (A.At(3, 1) * s5 - A.At(3, 2) * s4 + A.At(3, 3) * s3) * invDet;
+				inv.At(0, 3) = (-A.At(2, 1) * s5 + A.At(2, 2) * s4 - A.At(2, 3) * s3) * invDet;
+
+				inv.At(1, 0) = (-A.At(1, 0) * c5 + A.At(1, 2) * c2 - A.At(1, 3) * c1) * invDet;
+				inv.At(1, 1) = (A.At(0, 0) * c5 - A.At(0, 2) * c2 + A.At(0, 3) * c1) * invDet;
+				inv.At(1, 2) = (-A.At(3, 0) * s5 + A.At(3, 2) * s2 - A.At(3, 3) * s1) * invDet;
+				inv.At(1, 3) = (A.At(2, 0) * s5 - A.At(2, 2) * s2 + A.At(2, 3) * s1) * invDet;
+
+				inv.At(2, 0) = (A.At(1, 0) * c4 - A.At(1, 1) * c2 + A.At(1, 3) * c0) * invDet;
+				inv.At(2, 1) = (-A.At(0, 0) * c4 + A.At(0, 1) * c2 - A.At(0, 3) * c0) * invDet;
+				inv.At(2, 2) = (A.At(3, 0) * s4 - A.At(3, 1) * s2 + A.At(3, 3) * s0) * invDet;
+				inv.At(2, 3) = (-A.At(2, 0) * s4 + A.At(2, 1) * s2 - A.At(2, 3) * s0) * invDet;
+
+				inv.At(3, 0) = (-A.At(1, 0) * c3 + A.At(1, 1) * c1 - A.At(1, 2) * c0) * invDet;
+				inv.At(3, 1) = (A.At(0, 0) * c3 - A.At(0, 1) * c1 + A.At(0, 2) * c0) * invDet;
+				inv.At(3, 2) = (-A.At(3, 0) * s3 + A.At(3, 1) * s1 - A.At(3, 2) * s0) * invDet;
+				inv.At(3, 3) = (A.At(2, 0) * s3 - A.At(2, 1) * s1 + A.At(2, 2) * s0) * invDet;
+
+				return inv;
+			}
+
+			XLUX_FORCE_INLINE void ResetTranslation() requires (M == 4 && N == 4)
+			{
+				this->At(0, 3) = 0.0f;
+				this->At(1, 3) = 0.0f;
+				this->At(2, 3) = 0.0f;
+			}
+
 
 			XLUX_FORCE_INLINE auto Mul(const Mat<M, N, ValueType>& other) const requires (M == N && M == 4 && N == 4)
 			{
