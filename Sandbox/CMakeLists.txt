@@ -22,6 +22,7 @@ link_libraries(
 
 add_executable(sandbox
     ./Source/Sandbox.cpp
+    ./Source/ufbx.c
     ./Source/Win32_Window.cpp
     ./Source/WindowFramebuffer.cpp
 )
@@ -66,7 +67,7 @@ add_subdirectory(./Vendor/imgui_cmake)
 add_executable(07_imgui
 	./Source/07_ImGui.cpp
 	./Source/Win32_Window.cpp
-	./Source/WindowFramebuffer.cpp
+	./Source/WindowFramebuffer.cpp 
     ./Source/imgui_impl_xlux.cpp
     ./Vendor/imgui/backends/imgui_impl_win32.cpp
 )
