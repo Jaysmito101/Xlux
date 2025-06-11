@@ -19,6 +19,8 @@ namespace xlux
 		void BeginFrame();
 		void EndFrame();
 
+		void Flush();
+
 		void BindFramebuffer(RawPtr<IFramebuffer> fbo);
 		void BindPipeline(RawPtr<Pipeline> pipeline);
 		void Clear(Bool color = true, Bool depth = true);
@@ -27,7 +29,10 @@ namespace xlux
 		void DrawIndexed(RawPtr<Buffer> vertexBuffer, RawPtr<Buffer> indexBuffer, U32 indexCount, U32 startingVertex = 0, U32 startingIndex = 0);
 		void DrawIndexedOrdered(RawPtr<Buffer> vertexBuffer, RawPtr<Buffer> indexBuffer, U32 indexCount, U32 startingVertex = 0, U32 startingIndex = 0);
 
+
+		inline void SetRendererUserData(void* userData) { m_RendererUserData = userData; }
 		inline void SetClearColor(F32 r, F32 g, F32 b, F32 a) { m_ClearColor = { r, g, b, a }; }
+		inline void SetDetachedRendering(Bool detached) { m_DetachedRendering = detached; }
 
 		inline RawPtr<Pipeline> GetActivePipeline() { return m_ActivePipeline; }
 		inline Viewport GetActiveViewport() { return m_ActiveViewport.value(); }
@@ -41,10 +46,12 @@ namespace xlux
 
 	private:
 		Bool m_IsInFrame = false;
+		Bool m_DetachedRendering = false;
 		math::Vec4 m_ClearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 		RawPtr<IFramebuffer> m_ActiveFramebuffer = nullptr;
 		RawPtr<Pipeline> m_ActivePipeline = nullptr;
 		std::optional<Viewport> m_ActiveViewport;
+		void* m_RendererUserData = nullptr;
 
 
 		static constexpr U32 k_FragmentShaderWorkerCountX = 8;

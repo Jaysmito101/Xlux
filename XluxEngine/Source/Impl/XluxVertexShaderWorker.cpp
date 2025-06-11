@@ -12,8 +12,8 @@ namespace xlux
 	{
 		(void)result;
 
-		const auto indexBufferPtr = m_IndexBuffer->GetDataPtrWithOffset(m_StartingIndex * sizeof(U32));
-		const auto vertexBufferPtr = m_VertexBuffer->GetDataPtrWithOffset(m_StartingVertex * m_Pipeline->m_CreateInfo.vertexItemSize);
+		const auto indexBufferPtr = payload.indexBuffer->GetDataPtrWithOffset(payload.startingIndex * sizeof(U32));
+		const auto vertexBufferPtr = payload.vertexBuffer->GetDataPtrWithOffset(payload.startingVertex * payload.pipeline->m_CreateInfo.vertexItemSize);
 
 		const U32 triangleIndex[3] = {
 			((U32*)indexBufferPtr)[payload.indexStart + 0],
@@ -22,25 +22,28 @@ namespace xlux
 		};
 
 		void* vertexData[3] = {
-			&((U8*)vertexBufferPtr)[triangleIndex[0] * m_Pipeline->m_CreateInfo.vertexItemSize],
-			&((U8*)vertexBufferPtr)[triangleIndex[1] * m_Pipeline->m_CreateInfo.vertexItemSize],
-			&((U8*)vertexBufferPtr)[triangleIndex[2] * m_Pipeline->m_CreateInfo.vertexItemSize]
+			&((U8*)vertexBufferPtr)[triangleIndex[0] * payload.pipeline->m_CreateInfo.vertexItemSize],
+			&((U8*)vertexBufferPtr)[triangleIndex[1] * payload.pipeline->m_CreateInfo.vertexItemSize],
+			&((U8*)vertexBufferPtr)[triangleIndex[2] * payload.pipeline->m_CreateInfo.vertexItemSize]
 		};
 
 
-		auto seedTraingle = ShaderTriangleRef(m_VertexToFragmentDataAllocator, m_Pipeline->m_CreateInfo.vertexToFragmentDataSize, threadID);
+		auto seedTraingle = ShaderTriangleRef(m_VertexToFragmentDataAllocator, payload.pipeline->m_CreateInfo.vertexToFragmentDataSize, threadID);
 
 		// Vertex Shader Call
 		for (auto i = 0; i < 3; ++i)
 		{
 			seedTraingle.GetBuiltInRef(i)->Reset();
-			seedTraingle.GetBuiltInRef(i)->VertexIndex = ((I32)m_StartingIndex + payload.indexStart) * 3 + i;
-			m_Pipeline->m_CreateInfo.vertexShader->Execute(vertexData[i], seedTraingle.GetVertexData(i), seedTraingle.GetBuiltInRef(i));
+			seedTraingle.GetBuiltInRef(i)->VertexIndex = ((I32)payload.startingIndex + payload.indexStart) * 3 + i;
+			seedTraingle.GetBuiltInRef(i)->UserData = payload.userData;
+			payload.pipeline->m_CreateInfo.vertexShader->Execute(vertexData[i], seedTraingle.GetVertexData(i), seedTraingle.GetBuiltInRef(i));
 			seedTraingle.GetBuiltInRef(i)->Position /= seedTraingle.GetBuiltInRef(i)->Position[3];
 		}
 
+
+
 		// Backface Culling
-		if (m_Pipeline->m_CreateInfo.enableBackfaceCulling)
+		if (payload.pipeline->m_CreateInfo.enableBackfaceCulling)
 		{
 			if (!IsTriangleFacingCamera(seedTraingle.GetBuiltInRef(0)->Position, seedTraingle.GetBuiltInRef(1)->Position, seedTraingle.GetBuiltInRef(2)->Position))
 			{
@@ -60,7 +63,7 @@ namespace xlux
 		// doesnt really need to clip triangles as it can automatically
 		// discard fragments that are outside the viewport.
 		// However, clipping is still implemented for the sake of completeness.
-		if (m_Pipeline->m_CreateInfo.enableClipping)
+		if (payload.pipeline->m_CreateInfo.enableClipping)
 		{
 
 			// normal, point on plane (these are the planes of the cube from {-1, -1, -1} to {1, 1, 1})
@@ -76,7 +79,7 @@ namespace xlux
 			for (const auto& plane : clipPlanes)
 			{
 				// triangles = ClipTrianglesAgainstPlane(triangles, plane, plane, threadID);
-				triangleCount = ClipTrianglesAgainstPlane(trianglesBuffer[triangleBufferIndex], triangleCount, plane, plane, threadID, trianglesBuffer[1 - triangleBufferIndex]);
+				triangleCount = ClipTrianglesAgainstPlane(trianglesBuffer[triangleBufferIndex], triangleCount, plane, plane, threadID, payload, trianglesBuffer[1 - triangleBufferIndex]);
 				triangleBufferIndex = 1 - triangleBufferIndex;
 			}
 		}
@@ -98,34 +101,33 @@ namespace xlux
 					//position = position / position[3];
 					position = position * 0.5f + math::Vec4(0.5f);
 
-					position[0] = position[0] * m_Framebuffer->GetWidth();
-					position[1] = position[1] * m_Framebuffer->GetHeight();
+					position[0] = position[0] * payload.framebuffer->GetWidth();
+					position[1] = position[1] * payload.framebuffer->GetHeight();
 					position[3] = 1.0f;
-
 				}
-				m_Rasterizer(triangle);
+				payload.rasterizer(triangle);
 			}
 		}
 
 		return false;
 	}
 
-	Size VertexShaderWorker::ClipTrianglesAgainstPlane(const ShaderTriangleRef* triangles, Size tianglesCountIn, const math::Vec3& planeNormal, const math::Vec3& planePoint, Size threadID, ShaderTriangleRef* result)
+	Size VertexShaderWorker::ClipTrianglesAgainstPlane(const ShaderTriangleRef* triangles, Size tianglesCountIn, const math::Vec3& planeNormal, const math::Vec3& planePoint, Size threadID, const VertexShaderWorkerInput& payload, ShaderTriangleRef* result)
 	{
 		Size tianglesCountOut = 0;
 		// for (const auto& triangle : triangles)
 		for (auto i = 0; i < tianglesCountIn; ++i)
 		{
-			tianglesCountOut = ClipTriangleAgainstPlane(triangles[i], planeNormal, planePoint, threadID, tianglesCountOut, result);
+			tianglesCountOut = ClipTriangleAgainstPlane(triangles[i], planeNormal, planePoint, threadID, tianglesCountOut, payload, result);
 		}
 		return tianglesCountOut;
 	}
 
 
-	Size VertexShaderWorker::ClipTriangleAgainstPlane(const ShaderTriangleRef& triangle, const math::Vec3& planeNormal, const math::Vec3& planePoint, Size threadID, Size tianglesCount, ShaderTriangleRef* result)
+	Size VertexShaderWorker::ClipTriangleAgainstPlane(const ShaderTriangleRef& triangle, const math::Vec3& planeNormal, const math::Vec3& planePoint, Size threadID, Size tianglesCount, const VertexShaderWorkerInput& payload, ShaderTriangleRef* result)
 	{
 		//auto result = List<ShaderTriangleRef>();
-		auto intepolator = m_Pipeline->m_CreateInfo.interpolator;
+		auto intepolator = payload.pipeline->m_CreateInfo.interpolator;
 
 		Array<Pair<math::Vec4, U32>, 3> insidePoints;
 		Array<Pair<math::Vec4, U32>, 3> outsidePoints;
@@ -170,13 +172,13 @@ namespace xlux
 			auto [interSectionPoint0, t0] = PlaneIntersection(planeNormal, planePoint, math::Vec3(insidePoint0.x), math::Vec3(outsidePoint0.x));
 			auto [interSectionPoint1, t1] = PlaneIntersection(planeNormal, planePoint, math::Vec3(insidePoint1.x), math::Vec3(outsidePoint0.x));
 
-			auto triangle0 = ShaderTriangleRef(m_VertexToFragmentDataAllocator, m_Pipeline->m_CreateInfo.vertexToFragmentDataSize, threadID);
-			auto triangle1 = ShaderTriangleRef(m_VertexToFragmentDataAllocator, m_Pipeline->m_CreateInfo.vertexToFragmentDataSize, threadID);
+			auto triangle0 = ShaderTriangleRef(m_VertexToFragmentDataAllocator, payload.pipeline->m_CreateInfo.vertexToFragmentDataSize, threadID);
+			auto triangle1 = ShaderTriangleRef(m_VertexToFragmentDataAllocator, payload.pipeline->m_CreateInfo.vertexToFragmentDataSize, threadID);
 
 			{
 
-				std::memcpy(triangle0.GetVertexData(0), triangle.GetVertexData(insidePoint0.y), m_Pipeline->m_CreateInfo.vertexToFragmentDataSize);
-				std::memcpy(triangle0.GetVertexData(1), triangle.GetVertexData(insidePoint1.y), m_Pipeline->m_CreateInfo.vertexToFragmentDataSize);
+				std::memcpy(triangle0.GetVertexData(0), triangle.GetVertexData(insidePoint0.y), payload.pipeline->m_CreateInfo.vertexToFragmentDataSize);
+				std::memcpy(triangle0.GetVertexData(1), triangle.GetVertexData(insidePoint1.y), payload.pipeline->m_CreateInfo.vertexToFragmentDataSize);
 
 				intepolator->Reset(triangle0.GetVertexData(2));
 				intepolator->ScaleAndAdd(triangle0.GetVertexData(2), triangle.GetVertexData(insidePoint1.y), 1.0f - t1);
@@ -192,8 +194,8 @@ namespace xlux
 
 			{
 
-				std::memcpy(triangle1.GetVertexData(0), triangle.GetVertexData(insidePoint0.y), m_Pipeline->m_CreateInfo.vertexToFragmentDataSize);
-				std::memcpy(triangle1.GetVertexData(1), triangle0.GetVertexData(2), m_Pipeline->m_CreateInfo.vertexToFragmentDataSize);
+				std::memcpy(triangle1.GetVertexData(0), triangle.GetVertexData(insidePoint0.y), payload.pipeline->m_CreateInfo.vertexToFragmentDataSize);
+				std::memcpy(triangle1.GetVertexData(1), triangle0.GetVertexData(2), payload.pipeline->m_CreateInfo.vertexToFragmentDataSize);
 
 				intepolator->Reset(triangle1.GetVertexData(2));
 				intepolator->ScaleAndAdd(triangle1.GetVertexData(2), triangle.GetVertexData(insidePoint0.y), 1.0f - t0);
@@ -216,9 +218,9 @@ namespace xlux
 			auto [interSectionPoint0, t0] = PlaneIntersection(planeNormal, planePoint, math::Vec3(insidePoint0.x), math::Vec3(outsidePoint0.x));
 			auto [interSectionPoint1, t1] = PlaneIntersection(planeNormal, planePoint, math::Vec3(insidePoint0.x), math::Vec3(outsidePoint1.x));
 
-			auto triangle0 = ShaderTriangleRef(m_VertexToFragmentDataAllocator, m_Pipeline->m_CreateInfo.vertexToFragmentDataSize, threadID);
+			auto triangle0 = ShaderTriangleRef(m_VertexToFragmentDataAllocator, payload.pipeline->m_CreateInfo.vertexToFragmentDataSize, threadID);
 
-			std::memcpy(triangle0.GetVertexData(0), triangle.GetVertexData(insidePoint0.y), m_Pipeline->m_CreateInfo.vertexToFragmentDataSize);
+			std::memcpy(triangle0.GetVertexData(0), triangle.GetVertexData(insidePoint0.y), payload.pipeline->m_CreateInfo.vertexToFragmentDataSize);
 
 			intepolator->Reset(triangle0.GetVertexData(1));
 			intepolator->ScaleAndAdd(triangle0.GetVertexData(1), triangle.GetVertexData(insidePoint0.y), 1.0f - t0);

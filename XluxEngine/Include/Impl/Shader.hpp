@@ -15,6 +15,7 @@ namespace xlux
 	public:
 		math::Vec4 Position;
 		U32 VertexIndex;
+		void* UserData = nullptr;
 
 		inline ShaderBuiltIn() = default;
 
