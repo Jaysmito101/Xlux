@@ -52,8 +52,8 @@ namespace xlux
 		inline RawPtr<void> GetVertexData(U32 index) { return m_VertexData[index]; }
 		inline RawPtr<ShaderBuiltIn> GetBuiltInRef(U32 index) { return m_BuiltInRefs[index]; }
 
-		inline const RawPtr<ShaderBuiltIn> GetBuiltInRef(U32 index) const { return m_BuiltInRefs[index]; }
-		inline const RawPtr<void> GetVertexData(U32 index) const { return m_VertexData[index]; }
+		inline RawPtr<ShaderBuiltIn> GetBuiltInRef(U32 index) const { return m_BuiltInRefs[index]; }
+		inline RawPtr<void> GetVertexData(U32 index) const { return m_VertexData[index]; }
 
 		inline math::Vec4 GetBoundingBox() const
 		{
