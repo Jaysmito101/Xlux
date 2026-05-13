@@ -53,6 +53,12 @@ namespace xlux
 				return result;
 			}*/
 
+			XLUX_FORCE_INLINE Vec(const Vec<N, ValueTypeT>& other)
+			{
+				std::memcpy(m_Data, other.m_Data, sizeof(m_Data));
+			}
+			
+
 			template <Size M, VectorValueType... Args>
 			XLUX_FORCE_INLINE Vec(const Vec<M>& other, Args... args)
 			{
