@@ -10,6 +10,7 @@ namespace xlux
 	public:
 		virtual void ScaleAndAdd(void* dst, const void* src1, float scale) = 0;
 		virtual void Reset(void* dst) = 0;
+		virtual ~IInterpolator() = default;
 	};
 
 	template<typename T>
@@ -28,6 +29,7 @@ namespace xlux
 
 		virtual void ScaleAndAdd(T* dst, const T* src1, float scale) = 0;
 		virtual void Reset(T* dst) = 0;
+		virtual ~IInterpolatorG() = default;
 	};
 
 
