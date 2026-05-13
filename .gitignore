@@ -19,6 +19,7 @@ build
 build.msvc
 build.ninja
 
+imgui.ini
 *.suo
 *.user
 *.vcxproj
