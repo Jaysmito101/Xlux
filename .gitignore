@@ -14,6 +14,9 @@ Release
 RelWithDebInfo
 .vs
 .vscode
+build
+build.msvc
+build.ninja
 
 *.suo
 *.user
