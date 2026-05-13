@@ -23,6 +23,16 @@ class IFramebuffer {
     (void)x, (void)y, (void)depth, throw std::runtime_error("Not implemented");
   }
 
+  // This function can be used by the renderer to determine the optimal tiling
+  // configuration for the framebuffer. The default implementation returns a
+  // tile size of 64x64. The purpose for this is to allow the render to 
+  // creae optimal memory and synchronization slots for the framebuffer, so
+  // that it matches the inherent memory layout of the framebuffer, 
+  // which can significantly improve the performance of the renderer.
+  constexpr virtual Pair<U32, U32> GetOptimalTilingConfig() const {
+    return MakePair<U32, U32>(64, 64);
+  }
+
   virtual ~IFramebuffer() = default;
 };
 }  // namespace xlux
