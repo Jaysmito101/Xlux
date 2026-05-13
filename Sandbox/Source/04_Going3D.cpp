@@ -12,7 +12,7 @@ struct VertexInData
 	xlux::math::Vec3 texCoord;
 
 	VertexInData(xlux::math::Vec3 pos, xlux::math::Vec3 normal, xlux::math::Vec3 texCoord)
-		: position(pos), texCoord(texCoord), normal(normal)
+		: position(pos), normal(normal), texCoord(texCoord)
 	{}
 };
 
