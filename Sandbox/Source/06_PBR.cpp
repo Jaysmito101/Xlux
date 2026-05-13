@@ -17,11 +17,11 @@ struct VertexInData
 	xlux::math::Vec3 bitangent;
 
 	VertexInData(xlux::math::Vec3 pos, xlux::math::Vec3 normal, xlux::math::Vec3 texCoord)
-		: position(pos), texCoord(texCoord), normal(normal), tangent(0.0f, 0.0f, 0.0f), bitangent(0.0f, 0.0f, 0.0f)
+		: position(pos), normal(normal), texCoord(texCoord), tangent(0.0f, 0.0f, 0.0f), bitangent(0.0f, 0.0f, 0.0f)
 	{}
 
 	VertexInData()
-		: position(0.0f, 0.0f, 0.0f), texCoord(0.0f, 0.0f, 0.0f), normal(0.0f, 0.0f, 0.0f)
+		: position(0.0f, 0.0f, 0.0f), normal(0.0f, 0.0f, 0.0f), texCoord(0.0f, 0.0f, 0.0f)
 	{}
 };
 
