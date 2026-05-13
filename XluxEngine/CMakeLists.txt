@@ -8,6 +8,8 @@ else()
     add_compile_options(-Wall -Wextra -pedantic -Werror)
 endif()
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 set(SOURCES
 # core
     ./Source/Core/Logger.cpp
