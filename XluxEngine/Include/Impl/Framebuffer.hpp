@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/core.hpp"
+#include "Core/Core.hpp"
 
 namespace xlux
 {
