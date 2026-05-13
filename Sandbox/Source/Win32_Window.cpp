@@ -36,7 +36,7 @@ struct Win32_GraphicsBuffer
 		else
 		{
 			HDC hdcScreen = GetDC(NULL);
-			BITMAPINFO bmi = { 0 };
+			BITMAPINFO bmi = { };
 			bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 			bmi.bmiHeader.biWidth = wd;
 			bmi.bmiHeader.biHeight = -hgt; // top-down
@@ -142,7 +142,7 @@ Window::Window(const std::string& title, int width, int height)
 	m_Framebuffer = xlux::CreateRawPtr<WindowFramebuffer>();
 
 
-	WNDCLASSEX wincl = { 0 };
+	WNDCLASSEX wincl = { };
 	wincl.hInstance = s_ModuleHandle;
 	wincl.lpszClassName = m_Title.c_str();
 	wincl.lpfnWndProc = WindowProcedure;
@@ -203,7 +203,7 @@ xlux::Bool Window::HasClosed()
 
 void Window::Update()
 {
-	MSG messages = { 0 };
+	MSG messages = { };
 	while (PeekMessage(&messages, s_WindowHandle, 0, 0, PM_REMOVE))
 	{
 		// xlux::log::Info("Mesage : {0}", Win32MessageToString(messages.message));
