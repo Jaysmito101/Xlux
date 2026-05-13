@@ -91,11 +91,11 @@ namespace xlux
 		// if (m_Rasterizer) // this will be true if everything is ok so just skip the check for performance
 		{
 			// for (auto& triangle : triangles)
-			for (auto ti = 0; ti < triangleCount; ++ti)
+			for (U32 ti = 0; ti < triangleCount; ++ti)
 			{
 				auto& triangle = triangles[ti];
 				// Transform NDC to Screen space
-				for (auto i = 0; i < 3; ++i)
+				for (U32 i = 0; i < 3; ++i)
 				{
 					auto& position = triangle.GetBuiltInRef(i)->Position;
 					//position = position / position[3];
@@ -116,7 +116,7 @@ namespace xlux
 	{
 		Size tianglesCountOut = 0;
 		// for (const auto& triangle : triangles)
-		for (auto i = 0; i < tianglesCountIn; ++i)
+		for (U32 i = 0; i < tianglesCountIn; ++i)
 		{
 			tianglesCountOut = ClipTriangleAgainstPlane(triangles[i], planeNormal, planePoint, threadID, tianglesCountOut, payload, result);
 		}
