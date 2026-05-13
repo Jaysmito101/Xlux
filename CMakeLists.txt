@@ -23,7 +23,7 @@ add_subdirectory(Sandbox)
 
 # enable warnings as errors
 if (MSVC)
-    add_compile_options(/W4 /WX)
+    add_compile_options(/W4 /WX /std:c++latest)
 else()
     add_compile_options(-Wall -Wextra -pedantic -Werror)
 endif()
