@@ -341,8 +341,6 @@ public:
 
 		auto cosLo = std::max(0.0f, N.Dot(Lo));
 
-		auto Lr = N * 2.0f * cosLo - Lo;
-
 		static const auto Fdielectric = Vec3(0.04f);
 
 		auto F0 = Mix(Fdielectric, albedo, metalness);
