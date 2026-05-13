@@ -316,9 +316,9 @@ namespace xlux
 		input.triangle = triangle;
 
 
-		for (auto y = 0; y < k_FragmentShaderWorkerCountY; ++y)
+		for (U32 y = 0; y < k_FragmentShaderWorkerCountY; ++y)
 		{
-			for (auto x = 0; x < k_FragmentShaderWorkerCountX; ++x)
+			for (U32 x = 0; x < k_FragmentShaderWorkerCountX; ++x)
 			{
 				input.startX = std::max(static_cast<I32>(x * m_FragmentShaderTileWidth), m_ActiveViewport.value().x);
 				input.startY = std::max(static_cast<I32>(y * m_FragmentShaderTileHeight), m_ActiveViewport.value().y);
