@@ -71,8 +71,8 @@
 #include <limits>
 
 // core includes
-#include "core/Types.hpp"
-#include "core/Logger.hpp"
-#include "core/Utils.hpp"
-#include "core/EventManager.hpp"
-#include "core/LinearAllocator.hpp"
+#include "Core/Types.hpp"
+#include "Core/Logger.hpp"
+#include "Core/Utils.hpp"
+#include "Core/EventManager.hpp"
+#include "Core/LinearAllocator.hpp"
