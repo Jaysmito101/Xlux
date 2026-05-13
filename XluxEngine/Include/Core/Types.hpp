@@ -93,13 +93,13 @@ struct Pair {
   A x;
   B y;
 
-  Pair() : x(0), y(0) {}
-  Pair(const Pair& other) : x(other.x), y(other.y) {}
-  Pair(Pair&& other) noexcept : x(std::move(other.x)), y(std::move(other.y)) {}
-  Pair(A&& x, B&& y) : x(std::forward<A>(x)), y(std::forward<B>(y)) {}
-  Pair(const A& x, const B& y) : x(x), y(y) {}
+  constexpr Pair() : x(0), y(0) {}
+  constexpr Pair(const Pair& other) : x(other.x), y(other.y) {}
+  constexpr Pair(Pair&& other) noexcept : x(std::move(other.x)), y(std::move(other.y)) {}
+  constexpr Pair(A&& x, B&& y) : x(std::forward<A>(x)), y(std::forward<B>(y)) {}
+  constexpr Pair(const A& x, const B& y) : x(x), y(y) {}
 
-  Pair& operator=(const Pair& other) {
+  constexpr Pair& operator=(const Pair& other) {
     if (this != &other) {
       x = other.x;
       y = other.y;
@@ -107,7 +107,7 @@ struct Pair {
     return *this;
   }
 
-  Pair& operator=(Pair&& other) noexcept {
+  constexpr Pair& operator=(Pair&& other) noexcept {
     if (this != &other) {
       x = std::move(other.x);
       y = std::move(other.y);
@@ -117,7 +117,7 @@ struct Pair {
 };
 
 template <typename A, typename B>
-inline auto MakePair(A&& x, B&& y) {
+inline constexpr auto MakePair(A&& x, B&& y) {
   return Pair(std::forward<A>(x), std::forward<B>(y));
 }
 
