@@ -74,3 +74,4 @@
 #include "Core/Utils.hpp"
 #include "Core/EventManager.hpp"
 #include "Core/LinearAllocator.hpp"
+#include "Core/ScopedClock.hpp"
