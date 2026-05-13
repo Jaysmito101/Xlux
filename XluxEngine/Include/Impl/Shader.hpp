@@ -98,6 +98,7 @@ namespace xlux
 	{
 	public:
 		virtual Bool Execute(const RawPtr<void> dataIn, RawPtr<void> dataOut, RawPtr<ShaderBuiltIn> builtIn = nullptr) = 0;
+		virtual ~IShader() = default;
 	};
 
 
@@ -111,5 +112,7 @@ namespace xlux
 		}
 
 		virtual Bool Execute(const RawPtr<InDataType> dataIn, RawPtr<OutDataType> dataOut, RawPtr<ShaderBuiltIn> builtIn = nullptr) = 0;
+
+		virtual ~IShaderG() = default;
 	};
 }
