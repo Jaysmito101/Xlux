@@ -1,54 +1,48 @@
 #include "Xlux.hpp"
 #include "Window.hpp"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
 
+#include "imgui.h"
+#include "imgui_impl_xlux.h"
+#include "imgui_impl_win32.h"
+
+void LoadStyle();
 
 struct VertexInData
 {
 	xlux::math::Vec3 position;
-	xlux::math::Vec3 normal;
-	xlux::math::Vec3 texCoord;
+	xlux::math::Vec3 color;
 
-	VertexInData(xlux::math::Vec3 pos, xlux::math::Vec3 normal, xlux::math::Vec3 texCoord)
-		: position(pos), normal(normal), texCoord(texCoord)
+	VertexInData(xlux::math::Vec3 pos, xlux::math::Vec3 col)
+		: position(pos), color(col)
 	{}
 };
 
 struct VertexOutData
 {
 	xlux::math::Vec3 position = xlux::math::Vec3(0.0f, 0.0f, 0.0f);
-	xlux::math::Vec3 texCoord = xlux::math::Vec3(0.0f, 0.0f, 0.0f);
-	xlux::math::Vec3 normal = xlux::math::Vec3(0.0f, 0.0f, 0.0f);
+	xlux::math::Vec3 color = xlux::math::Vec3(0.0f, 0.0f, 0.0f);
 
 	inline VertexOutData Scaled(xlux::F32 scale) const
 	{
-		return VertexOutData(position * scale, texCoord * scale, normal * scale);
+		return VertexOutData(position * scale, color * scale);
 	}
 
 	inline void Add(const VertexOutData& other)
 	{
 		position += other.position;
-		texCoord += other.texCoord;
-		normal += other.normal;
+		color += other.color;
 	}
 };
 
 class HelloWorldVShader : public xlux::IShaderG<VertexInData, VertexOutData>
 {
 public:
-	xlux::math::Mat4x4 model = xlux::math::Mat4x4::Identity();
-	xlux::math::Mat4x4 viewProj = xlux::math::Mat4x4::Identity();
-
-public:
 	xlux::Bool Execute(const xlux::RawPtr<VertexInData> dataIn, xlux::RawPtr<VertexOutData> dataOut, xlux::RawPtr<xlux::ShaderBuiltIn> builtIn)
 	{
-		dataOut->texCoord = dataIn->texCoord;
 		dataOut->position = dataIn->position;
-		dataOut->normal = dataIn->normal;
-		auto pos = viewProj.Mul(model.Mul(xlux::math::Vec4(dataIn->position, 1.0f)));
-		//auto pos = dataIn->position;
+		dataOut->color = dataIn->color;
+		auto pos = dataIn->position;
 		builtIn->Position = xlux::math::Vec4(pos, 1.0f);
 		return true;
 	}
@@ -57,17 +51,10 @@ public:
 class HelloWorldFShader : public xlux::IShaderG<VertexOutData, xlux::FragmentShaderOutput>
 {
 public:
-	xlux::RawPtr<xlux::Texture2D> texture;
-
-public:
 	xlux::Bool Execute(const xlux::RawPtr<VertexOutData> dataIn, xlux::RawPtr<xlux::FragmentShaderOutput> dataOut, xlux::RawPtr<xlux::ShaderBuiltIn> builtIn)
 	{
-		(void)builtIn; // unused
-		const auto lightPos = xlux::math::Vec3(0.0f, 1.0f, 0.0f);
-		const auto lightColor = xlux::math::Vec4(1.0f, 1.0f, 1.0f, 1.0f);
-		const auto lightDir = (lightPos - dataIn->position).Normalized();
-		const auto lightIntensity = std::max(0.0f, lightDir.Dot(dataIn->normal * -1.0f));
-		dataOut->Color[0] = texture->Sample(dataIn->texCoord) * lightIntensity * lightColor;
+		(void)builtIn;
+		dataOut->Color[0] = xlux::math::Vec4(dataIn->color, 1.0f);
 		return true;
 	}
 };
@@ -78,9 +65,20 @@ int main()
 	Window::Create("Xlux Engine Sandbox - Jaysmito Mukherjee", 640, 480);
 	xlux::log::Info("Xlux - High Performance Software Renderer Device");
 
-	auto device = xlux::Device::Create();
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+	ImGui::StyleColorsDark();
+	LoadStyle();
 
+	auto device = xlux::Device::Create();
 	auto framebuffer = Window::GetFramebuffer();
+
+	ImGui_ImplWin32_InitForOpenGL(Window::GetRawHandle());
+	ImGui_ImplXlux_Init(device);
+
+	Window::InitializeImGui();
 
 	auto vertexShader = xlux::CreateRawPtr<HelloWorldVShader>();
 	auto fragmentShader = xlux::CreateRawPtr<HelloWorldFShader>();
@@ -90,79 +88,26 @@ int main()
 		.SetShader(vertexShader, xlux::ShaderStage_Vertex)
 		.SetShader(fragmentShader, xlux::ShaderStage_Fragment)
 		.SetInterpolator(interpolator)
-		.SetDepthTestEnable(true)
-		//.SetClippingEnable(true)
-		.SetDepthCompareFunction(xlux::CompareFunction_Less)
+		.SetBackfaceCullingEnable(true)
 		.SetVertexItemSize(sizeof(VertexInData))
 		.SetVertexToFragmentDataSize(sizeof(VertexOutData));
 
 	auto pipeline = device->CreatePipeline(createInfo);
-	
-	// Vectices for a cube with vertex Normals (all 36 vertices)
+
 	const auto vertices = std::vector<VertexInData>{
-        // Front
-		VertexInData(xlux::math::Vec3(-0.5f, -0.5f, 0.5f), xlux::math::Vec3(0.0f, 0.0f, 1.0f), xlux::math::Vec3(0.0f, 0.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(0.5f, -0.5f, 0.5f), xlux::math::Vec3(0.0f, 0.0f, 1.0f), xlux::math::Vec3(1.0f, 0.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(0.5f, 0.5f, 0.5f), xlux::math::Vec3(0.0f, 0.0f, 1.0f), xlux::math::Vec3(1.0f, 1.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(0.5f, 0.5f, 0.5f), xlux::math::Vec3(0.0f, 0.0f, 1.0f), xlux::math::Vec3(1.0f, 1.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(-0.5f, 0.5f, 0.5f), xlux::math::Vec3(0.0f, 0.0f, 1.0f), xlux::math::Vec3(0.0f, 1.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(-0.5f, -0.5f, 0.5f), xlux::math::Vec3(0.0f, 0.0f, 1.0f), xlux::math::Vec3(0.0f, 0.0f, 0.0f)),
-		// Back
-        VertexInData(xlux::math::Vec3(-0.5f, -0.5f, -0.5f), xlux::math::Vec3(0.0f, 0.0f, -1.0f), xlux::math::Vec3(0.0f, 0.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(0.5f, -0.5f, -0.5f), xlux::math::Vec3(0.0f, 0.0f, -1.0f), xlux::math::Vec3(1.0f, 0.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(0.5f, 0.5f, -0.5f), xlux::math::Vec3(0.0f, 0.0f, -1.0f), xlux::math::Vec3(1.0f, 1.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(0.5f, 0.5f, -0.5f), xlux::math::Vec3(0.0f, 0.0f, -1.0f), xlux::math::Vec3(1.0f, 1.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(-0.5f, 0.5f, -0.5f), xlux::math::Vec3(0.0f, 0.0f, -1.0f), xlux::math::Vec3(0.0f, 1.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(-0.5f, -0.5f, -0.5f), xlux::math::Vec3(0.0f, 0.0f, -1.0f), xlux::math::Vec3(0.0f, 0.0f, 0.0f)),
-		// Left
-        VertexInData(xlux::math::Vec3(-0.5f, 0.5f, -0.5f), xlux::math::Vec3(-1.0f, 0.0f, 0.0f), xlux::math::Vec3(1.0f, 0.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(-0.5f, 0.5f, 0.5f), xlux::math::Vec3(-1.0f, 0.0f, 0.0f), xlux::math::Vec3(1.0f, 1.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(-0.5f, -0.5f, 0.5f), xlux::math::Vec3(-1.0f, 0.0f, 0.0f), xlux::math::Vec3(0.0f, 1.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(-0.5f, -0.5f, 0.5f), xlux::math::Vec3(-1.0f, 0.0f, 0.0f), xlux::math::Vec3(0.0f, 1.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(-0.5f, -0.5f, -0.5f), xlux::math::Vec3(-1.0f, 0.0f, 0.0f), xlux::math::Vec3(0.0f, 0.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(-0.5f, 0.5f, -0.5f), xlux::math::Vec3(-1.0f, 0.0f, 0.0f), xlux::math::Vec3(1.0f, 0.0f, 0.0f)),
-		// Right
-        VertexInData(xlux::math::Vec3(0.5f, 0.5f, 0.5f), xlux::math::Vec3(1.0f, 0.0f, 0.0f), xlux::math::Vec3(1.0f, 0.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(0.5f, 0.5f, -0.5f), xlux::math::Vec3(1.0f, 0.0f, 0.0f), xlux::math::Vec3(1.0f, 1.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(0.5f, -0.5f, -0.5f), xlux::math::Vec3(1.0f, 0.0f, 0.0f), xlux::math::Vec3(0.0f, 1.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(0.5f, -0.5f, -0.5f), xlux::math::Vec3(1.0f, 0.0f, 0.0f), xlux::math::Vec3(0.0f, 1.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(0.5f, -0.5f, 0.5f), xlux::math::Vec3(1.0f, 0.0f, 0.0f), xlux::math::Vec3(0.0f, 0.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(0.5f, 0.5f, 0.5f), xlux::math::Vec3(1.0f, 0.0f, 0.0f), xlux::math::Vec3(1.0f, 0.0f, 0.0f)),
-		// Bottom
-        VertexInData(xlux::math::Vec3(-0.5f, -0.5f, -0.5f), xlux::math::Vec3(0.0f, -1.0f, 0.0f), xlux::math::Vec3(0.0f, 1.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(0.5f, -0.5f, -0.5f), xlux::math::Vec3(0.0f, -1.0f, 0.0f), xlux::math::Vec3(1.0f, 1.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(0.5f, -0.5f, 0.5f), xlux::math::Vec3(0.0f, -1.0f, 0.0f), xlux::math::Vec3(1.0f, 0.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(0.5f, -0.5f, 0.5f), xlux::math::Vec3(0.0f, -1.0f, 0.0f), xlux::math::Vec3(1.0f, 0.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(-0.5f, -0.5f, 0.5f), xlux::math::Vec3(0.0f, -1.0f, 0.0f), xlux::math::Vec3(0.0f, 0.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(-0.5f, -0.5f, -0.5f), xlux::math::Vec3(0.0f, -1.0f, 0.0f), xlux::math::Vec3(0.0f, 1.0f, 0.0f)),
-		// Top
-        VertexInData(xlux::math::Vec3(-0.5f, 0.5f, -0.5f), xlux::math::Vec3(0.0f, 1.0f, 0.0f), xlux::math::Vec3(0.0f, 1.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(0.5f, 0.5f, -0.5f), xlux::math::Vec3(0.0f, 1.0f, 0.0f), xlux::math::Vec3(1.0f, 1.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(0.5f, 0.5f, 0.5f), xlux::math::Vec3(0.0f, 1.0f, 0.0f), xlux::math::Vec3(1.0f, 0.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(0.5f, 0.5f, 0.5f), xlux::math::Vec3(0.0f, 1.0f, 0.0f), xlux::math::Vec3(1.0f, 0.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(-0.5f, 0.5f, 0.5f), xlux::math::Vec3(0.0f, 1.0f, 0.0f), xlux::math::Vec3(0.0f, 0.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(-0.5f, 0.5f, -0.5f), xlux::math::Vec3(0.0f, 1.0f, 0.0f), xlux::math::Vec3(0.0f, 1.0f, 0.0f)),
+		VertexInData(xlux::math::Vec3(-0.5f, -0.5f, 0.0f), xlux::math::Vec3(1.0f, 0.0f, 0.0f)),
+		VertexInData(xlux::math::Vec3(0.5f, -0.5f, 0.0f), xlux::math::Vec3(0.0f, 1.0f, 0.0f)),
+		VertexInData(xlux::math::Vec3(0.0f,  0.5f, 0.0f), xlux::math::Vec3(0.0f, 0.0f, 1.0f))
 	};
 
-	// for 0 - 36 all
-	std::vector<xlux::U32> indices = {
-        0, 1, 2, 3, 4, 5, // Front
-		6, 7, 8, 9, 10, 11, // Back
-		12, 13, 14, 15, 16, 17, // Left
-		18, 19, 20, 21, 22, 23, // Right
-		24, 25, 26, 27, 28, 29, // Bottom
-		30, 31, 32, 33, 34, 35 // Top	
+	const auto indices = std::vector<xlux::U32>{
+		0, 1, 2
 	};
 
+	xlux::log::Info("Num Vertices: " + std::to_string(vertices.size()));
+	xlux::log::Info("Num Indices: " + std::to_string(indices.size()));
 
-
-	stbi_set_flip_vertically_on_load(true);
-	xlux::I32 tWidth = 0, tHeight = 0, tChannels = 0;
-	auto textureData = stbi_loadf((xlux::utils::GetExecutableDirectory() + "/logo.jpg").c_str(), &tWidth, &tHeight, &tChannels, 3);
-	auto texture = device->CreateTexture2D(tWidth, tHeight, xlux::TexelFormat_RGB);
-	
-
-	auto totalSize = sizeof(VertexInData) * vertices.size() + sizeof(xlux::U32) * indices.size() + texture->GetSizeInBytes();
+	auto totalSize = sizeof(VertexInData) * vertices.size() + sizeof(xlux::U32) * indices.size();
 	auto deviceMemory = device->AllocateMemory(totalSize);
 
 	auto vertexBuffer = device->CreateBuffer(sizeof(VertexInData) * vertices.size());
@@ -173,21 +118,9 @@ int main()
 	indexBuffer->BindMemory(deviceMemory, sizeof(VertexInData) * vertices.size());
 	indexBuffer->SetData(indices.data(), sizeof(xlux::U32) * indices.size());
 
-	auto textureBuffer = device->CreateBuffer(texture->GetSizeInBytes());
-	textureBuffer->BindMemory(deviceMemory, sizeof(VertexInData) * vertices.size() + sizeof(xlux::U32) * indices.size());
-	texture->BindBuffer(textureBuffer);
-	texture->SetData(textureData, texture->GetSizeInBytes(), 0);
-	stbi_image_free(textureData);
-
-
 	auto renderer = device->CreateRenderer();
 
 	auto prevTime = xlux::utils::GetTime(), currTime = xlux::utils::GetTime(), deltaTime = 0.0f;
-
-	auto proj = xlux::math::Mat4x4::Perspective(xlux::math::ToRadians(66.0f), (float)framebuffer->GetWidth() / (float)framebuffer->GetHeight(), 0.1f, 100.0f);
-	auto view = xlux::math::Mat4x4::LookAt(xlux::math::Vec3(2.0f, 2.0f, 2.0f), xlux::math::Vec3(0.0f, 0.0f, 0.0f), xlux::math::Vec3(0.0f, 1.0f, 0.0f));
-
-	fragmentShader->texture = texture;
 
 	while (!Window::HasClosed())
 	{
@@ -195,11 +128,7 @@ int main()
 		deltaTime = currTime - prevTime;
 		prevTime = currTime;
 
-		Window::SetTitle("Xlux Engine [Going 3D] - Jaysmito Mukherjee - FPS: " + std::to_string(1.0f / deltaTime));
-
-		proj = xlux::math::Mat4x4::Perspective(xlux::math::ToRadians(66.0f), (float)framebuffer->GetWidth() / (float)framebuffer->GetHeight(), 0.1f, 100.0f);
-		vertexShader->model = xlux::math::Mat4x4::RotateY(currTime * 0.5f);
-		vertexShader->viewProj = proj.Mul(view);
+		Window::SetTitle("Xlux Engine [Hello Triangle] - Jaysmito Mukherjee - FPS: " + std::to_string(1.0f / deltaTime));
 
 		renderer->BeginFrame();
 		renderer->BindFramebuffer(framebuffer);
@@ -207,7 +136,28 @@ int main()
 		renderer->SetClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 		renderer->Clear();
 		renderer->BindPipeline(pipeline);
+
 		renderer->DrawIndexed(vertexBuffer, indexBuffer, static_cast<xlux::U32>(indices.size()));
+
+
+		ImGui_ImplXlux_NewFrame();
+		ImGui_ImplWin32_NewFrame();
+		ImGui::NewFrame();
+		
+		// increase global size to 5
+		ImGui::GetIO().FontGlobalScale = 1.5f;
+
+		if (ImGui::Begin("asdasd")) {
+			ImGui::Text("Hello wrold!");
+			ImGui::Text("Hello wrold!");
+			ImGui::Image(ImGui::GetIO().Fonts->TexID, ImVec2(1024, 256));
+			ImGui::End();
+		}
+
+		ImGui::ShowDemoWindow();
+		
+		ImGui::Render();
+		ImGui_ImplXlux_RenderDrawData(ImGui::GetDrawData(), renderer);
 		renderer->EndFrame();
 
 
@@ -217,8 +167,6 @@ int main()
 
 	device->DestroyRenderer(renderer);
 	device->DestroyPipeline(pipeline);
-	device->DestroyTexture(texture);
-	device->DestroyBuffer(textureBuffer);
 	device->DestroyBuffer(vertexBuffer);
 	device->DestroyBuffer(indexBuffer);
 	device->FreeMemory(deviceMemory);
@@ -227,7 +175,76 @@ int main()
 	delete fragmentShader;
 	delete interpolator;
 
+	ImGui_ImplXlux_Shutdown(); // Must be called before destroying the device
+	ImGui_ImplWin32_Shutdown();
+
 	xlux::Device::Destroy(device);
 	Window::Destroy();
 	xlux::Logger::Shutdown();
+}
+
+
+void LoadStyle()
+{
+	ImGuiStyle* style = &ImGui::GetStyle();
+	style->WindowPadding = ImVec2(15, 15);
+	style->WindowRounding = 5.0f;
+	style->FramePadding = ImVec2(5, 5);
+	style->FrameRounding = 4.0f;
+	style->ItemSpacing = ImVec2(12, 8);
+	style->ItemInnerSpacing = ImVec2(8, 6);
+	style->IndentSpacing = 25.0f;
+	style->ScrollbarSize = 15.0f;
+	style->ScrollbarRounding = 9.0f;
+	style->GrabMinSize = 5.0f;
+	style->GrabRounding = 3.0f;
+	style->WindowBorderSize = 0;
+	style->ChildBorderSize = 0;
+	style->PopupBorderSize = 0;
+	style->FrameBorderSize = 0;
+	style->TabBorderSize = 0;
+	style->Colors[ImGuiCol_Text] = ImVec4(0.80f, 0.80f, 0.83f, 1.00f);
+	style->Colors[ImGuiCol_TextDisabled] = ImVec4(0.24f, 0.23f, 0.29f, 1.00f);
+	style->Colors[ImGuiCol_WindowBg] = ImVec4(0.06f, 0.05f, 0.07f, 1.00f);
+	style->Colors[ImGuiCol_PopupBg] = ImVec4(0.07f, 0.07f, 0.09f, 1.00f);
+	style->Colors[ImGuiCol_Border] = ImVec4(0.80f, 0.80f, 0.83f, 0.88f);
+	style->Colors[ImGuiCol_BorderShadow] = ImVec4(0.92f, 0.91f, 0.88f, 0.00f);
+	style->Colors[ImGuiCol_FrameBg] = ImVec4(0.10f, 0.09f, 0.12f, 1.00f);
+	style->Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.24f, 0.23f, 0.29f, 1.00f);
+	style->Colors[ImGuiCol_FrameBgActive] = ImVec4(0.56f, 0.56f, 0.58f, 1.00f);
+	style->Colors[ImGuiCol_TitleBg] = ImVec4(0.10f, 0.09f, 0.12f, 1.00f);
+	style->Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(1.00f, 0.98f, 0.95f, 0.75f);
+	style->Colors[ImGuiCol_TitleBgActive] = ImVec4(0.07f, 0.07f, 0.09f, 1.00f);
+	style->Colors[ImGuiCol_MenuBarBg] = ImVec4(0.10f, 0.09f, 0.12f, 1.00f);
+	style->Colors[ImGuiCol_ScrollbarBg] = ImVec4(0.10f, 0.09f, 0.12f, 1.00f);
+	style->Colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.80f, 0.80f, 0.83f, 0.31f);
+	style->Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.56f, 0.56f, 0.58f, 1.00f);
+	style->Colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.06f, 0.05f, 0.07f, 1.00f);
+	style->Colors[ImGuiCol_CheckMark] = ImVec4(0.80f, 0.80f, 0.83f, 0.31f);
+	style->Colors[ImGuiCol_SliderGrab] = ImVec4(0.80f, 0.80f, 0.83f, 0.31f);
+	style->Colors[ImGuiCol_SliderGrabActive] = ImVec4(0.06f, 0.05f, 0.07f, 1.00f);
+	style->Colors[ImGuiCol_Button] = ImVec4(0.10f, 0.09f, 0.12f, 1.00f);
+	style->Colors[ImGuiCol_ButtonHovered] = ImVec4(0.24f, 0.23f, 0.29f, 1.00f);
+	style->Colors[ImGuiCol_ButtonActive] = ImVec4(0.56f, 0.56f, 0.58f, 1.00f);
+	style->Colors[ImGuiCol_Header] = ImVec4(0.10f, 0.09f, 0.12f, 1.00f);
+	style->Colors[ImGuiCol_HeaderHovered] = ImVec4(0.56f, 0.56f, 0.58f, 1.00f);
+	style->Colors[ImGuiCol_HeaderActive] = ImVec4(0.06f, 0.05f, 0.07f, 1.00f);
+	style->Colors[ImGuiCol_ResizeGrip] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+	style->Colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.56f, 0.56f, 0.58f, 1.00f);
+	style->Colors[ImGuiCol_ResizeGripActive] = ImVec4(0.06f, 0.05f, 0.07f, 1.00f);
+	style->Colors[ImGuiCol_PlotLines] = ImVec4(0.40f, 0.39f, 0.38f, 0.63f);
+	style->Colors[ImGuiCol_PlotLinesHovered] = ImVec4(0.25f, 1.00f, 0.00f, 1.00f);
+	style->Colors[ImGuiCol_PlotHistogram] = ImVec4(0.40f, 0.39f, 0.38f, 0.63f);
+	style->Colors[ImGuiCol_PlotHistogramHovered] = ImVec4(0.25f, 1.00f, 0.00f, 1.00f);
+	style->Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.25f, 1.00f, 0.00f, 0.43f);
+	ImVec4* colors = ImGui::GetStyle().Colors;
+	colors[ImGuiCol_Tab] = ImVec4(0.146f, 0.113f, 0.146f, 0.86f);
+	colors[ImGuiCol_TabHovered] = ImVec4(0.364f, 0.205f, 0.366f, 0.80f);
+	colors[ImGuiCol_TabActive] = ImVec4(51.0f / 255, 31.0f / 255, 49.0f / 255, 0.97f);
+	colors[ImGuiCol_TabUnfocused] = ImVec4(51.0f / 255, 31.0f / 255, 49.0f / 255, 0.57f);
+	colors[ImGuiCol_Header] = ImVec4(0.61f, 0.61f, 0.62f, 0.22f);
+	colors[ImGuiCol_HeaderHovered] = ImVec4(0.61f, 0.62f, 0.62f, 0.51f);
+	colors[ImGuiCol_HeaderActive] = ImVec4(0.61f, 0.62f, 0.62f, 0.83f);
+	colors[ImGuiCol_TabUnfocused] = ImVec4(43.0f / 255, 17.0f / 255, 43.0f / 255, 0.97f);
+	colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.202f, 0.116f, 0.196f, 0.57f);
 }
