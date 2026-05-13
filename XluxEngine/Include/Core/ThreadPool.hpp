@@ -155,20 +155,15 @@ namespace xlux
 		Size m_SleepDuration = 10;
 	};
 
-	namespace internal_
-	{
-		template <typename T>
-		concept IdCon = std::is_integral_v<T>;
-	}
-
 	template<U32 JobCount, typename JobPayload, typename JobResult>
 	class ThreadPool
 	{
 	public:
 		ThreadPool(RawPtr<IJob<JobPayload, JobResult>> job)
 		{
-			for (U32 i = 0; i < JobCount; ++i)
+			for (U32 i = 0; i < JobCount; ++i) {
 				m_Workers[i] = new PoolWorker<JobPayload, JobResult>(job, i);
+			}
 		}
 
 		~ThreadPool()
@@ -178,46 +173,10 @@ namespace xlux
 		}
 
 
-		template <internal_::IdCon... Ids>
-		inline void Pause()
-		{
-			if constexpr (sizeof...(Ids) == 0)
-			{
-				for (U32 i = 0; i < JobCount; ++i)
-					m_Workers[i]->Pause();
-			}
-			else
-			{
-				(m_Workers[Ids]->Pause(), ...);
-			}
-		}
-
-		template <internal_::IdCon... Ids>
-		inline void Resume()
-		{
-			if constexpr (sizeof...(Ids) == 0)
-			{
-				for (U32 i = 0; i < JobCount; ++i)
-					m_Workers[i]->Resume();
-			}
-			else
-			{
-				(m_Workers[Ids]->Resume(), ...);
-			}
-		}
-
-		template <internal_::IdCon... Ids>
 		inline void WaitJobDone()
 		{
-			if constexpr (sizeof...(Ids) == 0)
-			{
 				for (U32 i = 0; i < JobCount; ++i)
 					m_Workers[i]->WaitJobDone();
-			}
-			else
-			{
-				(m_Workers[Ids]->WaitJobDone(), ...);
-			}
 		}
 
 		inline U32 GetWorkerCount() const
@@ -225,40 +184,15 @@ namespace xlux
 			return JobCount;
 		}
 
-		template <internal_::IdCon... Ids>
 		inline Bool HasJob() const
 		{
-			if constexpr (sizeof...(Ids) == 0)
+			for (U32 i = 0; i < JobCount; ++i)
 			{
-				for (U32 i = 0; i < JobCount; ++i)
-				{
-					if (m_Workers[i]->HasJob())
-						return true;
+				if (m_Workers[i]->HasJob()) {
+					return true;
 				}
-				return false;
 			}
-			else
-			{
-				return (m_Workers[Ids]->HasJob() || ...);
-			}
-		}
-
-		template <internal_::IdCon... Ids>
-		inline Bool HasResult() const
-		{
-			if constexpr (sizeof...(Ids) == 0)
-			{
-				for (U32 i = 0; i < JobCount; ++i)
-				{
-					if (m_Workers[i]->HasResult())
-						return true;
-				}
-				return false;
-			}
-			else
-			{
-				return (m_Workers[Ids]->HasResult() || ...);
-			}
+			return false;
 		}
 
 		inline U32 AddJob(const JobPayload& job)
@@ -275,26 +209,6 @@ namespace xlux
 			U32 id = threadID;
 			m_Workers[id]->AddJob(job);
 			return id;
-		}
-
-		template <internal_::IdCon... Ids>
-		inline std::array<JobResult, sizeof...(Ids)> GetJobResult()
-		{
-			std::array<JobResult, sizeof...(Ids)> results;
-			if constexpr (sizeof...(Ids) == 0)
-			{
-				for (U32 i = 0; i < JobCount; ++i)
-				{
-					if (m_Workers[i]->HasResult())
-						results[i] = m_Workers[i]->GetJobResult();
-				}
-			}
-			else
-			{
-				U32 i = 0;
-				((m_Workers[Ids]->HasResult() ? results[i++] = m_Workers[Ids]->GetJobResult() : 0), ...);
-			}
-			return results;
 		}
 
 	private:
