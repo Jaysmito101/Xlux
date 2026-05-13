@@ -27,6 +27,8 @@ add_executable(sandbox
     ./Source/imgui_impl_xlux.cpp
     ./Vendor/imgui/backends/imgui_impl_win32.cpp
 )
+target_link_libraries(sandbox imgui)
+target_compile_definitions(sandbox PRIVATE XLUX_USE_IMGUI)
 
 add_executable(01_hellotriangle
     ./Source/01_HelloTriangle.cpp
