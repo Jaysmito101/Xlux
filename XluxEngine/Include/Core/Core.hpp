@@ -59,6 +59,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <algorithm>
 #include <cstdint>
 #include <cctype>
 #include <cstring>
