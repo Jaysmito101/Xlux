@@ -21,8 +21,9 @@ namespace xlux
 
 		void Subscribe(std::function<void(ParamsData...)> callback, String callbackID = "")
 		{
-			if (callbackID.empty())
+			if (callbackID.empty()) {
 				callbackID = "callback" + std::to_string(rand());
+			}
 
 			m_EventSubscribers.emplace(callbackID, callback);
 		}
