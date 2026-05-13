@@ -5,7 +5,7 @@ xlux::Pair<xlux::U32, xlux::U32> WindowFramebuffer::GetSize() const
 	return xlux::MakePair<xlux::U32, xlux::U32>(Window::GetWidth(), Window::GetHeight());
 }
 
-static xlux::F32 s_ColorBuffer[4096][4096][4] = { 0.0f };
+static xlux::F32 s_ColorBuffer[4096][4096][4] = {  };
 
 void WindowFramebuffer::SetColorPixel(xlux::I32 channel, xlux::I32 x, xlux::I32 y, xlux::F32 r, xlux::F32 g, xlux::F32 b, xlux::F32 a)
 {
@@ -48,7 +48,7 @@ void WindowFramebuffer::GetColorPixel(xlux::I32 channel, xlux::I32 x, xlux::I32 
 	a = s_ColorBuffer[x][y][3];
 }
 
-static xlux::F32 s_DepthBuffer[4096][4096] = { 0.0f };
+static xlux::F32 s_DepthBuffer[4096][4096] = {  };
 
 void WindowFramebuffer::GetDepthPixel(xlux::I32 x, xlux::I32 y, xlux::F32& depth) const
 {
