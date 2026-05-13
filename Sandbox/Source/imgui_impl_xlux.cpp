@@ -6,7 +6,7 @@
 #include "imgui.h"
 
 #ifndef IMGUI_DISABLE
-#include "imgui_impl_Xlux.h"
+#include "imgui_impl_xlux.h"
 
 // Clang/GCC warnings with -Weverything
 #if defined(__clang__)
