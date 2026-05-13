@@ -22,9 +22,10 @@ link_libraries(
 
 add_executable(sandbox
     ./Source/Sandbox.cpp
-    ./Source/ufbx.c
     ./Source/Win32_Window.cpp
     ./Source/WindowFramebuffer.cpp
+    ./Source/imgui_impl_xlux.cpp
+    ./Vendor/imgui/backends/imgui_impl_win32.cpp
 )
 
 add_executable(01_hellotriangle
