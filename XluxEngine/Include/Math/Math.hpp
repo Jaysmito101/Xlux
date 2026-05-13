@@ -3,8 +3,8 @@
 #include "Math/Vector.hpp"
 #include "Math/Matrix.hpp"
 
-#include "Math/VectorSIMD.hpp"
-#include "Math/MatrixSIMD.hpp"
+// #include "Math/VectorSIMD.hpp"
+// #include "Math/MatrixSIMD.hpp"
 
 namespace xlux
 {
