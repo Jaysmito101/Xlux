@@ -94,12 +94,31 @@ struct Pair {
   B y;
 
   Pair() : x(0), y(0) {}
-  Pair(A x, B y) : x(x), y(y) {}
+  Pair(const Pair& other) : x(other.x), y(other.y) {}
+  Pair(Pair&& other) noexcept : x(std::move(other.x)), y(std::move(other.y)) {}
+  Pair(A&& x, B&& y) : x(std::forward<A>(x)), y(std::forward<B>(y)) {}
+  Pair(const A& x, const B& y) : x(x), y(y) {}
+
+  Pair& operator=(const Pair& other) {
+    if (this != &other) {
+      x = other.x;
+      y = other.y;
+    }
+    return *this;
+  }
+
+  Pair& operator=(Pair&& other) noexcept {
+    if (this != &other) {
+      x = std::move(other.x);
+      y = std::move(other.y);
+    }
+    return *this; 
+  }
 };
 
 template <typename A, typename B>
-inline Pair<A, B> MakePair(A x, B y) {
-  return Pair<A, B>(x, y);
+inline auto MakePair(A&& x, B&& y) {
+  return Pair(std::forward<A>(x), std::forward<B>(y));
 }
 
 template <typename T>
