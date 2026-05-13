@@ -4,171 +4,181 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+struct VertexInData {
+  xlux::math::Vec3 position;
+  xlux::math::Vec3 texCoord;
 
-struct VertexInData
-{
-	xlux::math::Vec3 position;
-	xlux::math::Vec3 texCoord;
-
-	VertexInData(xlux::math::Vec3 pos, xlux::math::Vec3 texCoord)
-		: position(pos), texCoord(texCoord)
-	{}
+  VertexInData(xlux::math::Vec3 pos, xlux::math::Vec3 texCoord)
+      : position(pos), texCoord(texCoord) {}
 };
 
-struct VertexOutData
-{
-	xlux::math::Vec3 position = xlux::math::Vec3(0.0f, 0.0f, 0.0f);
-	xlux::math::Vec3 texCoord = xlux::math::Vec3(0.0f, 0.0f, 0.0f);
+struct VertexOutData {
+  xlux::math::Vec3 position = xlux::math::Vec3(0.0f, 0.0f, 0.0f);
+  xlux::math::Vec3 texCoord = xlux::math::Vec3(0.0f, 0.0f, 0.0f);
 
-	inline VertexOutData Scaled(xlux::F32 scale) const
-	{
-		return VertexOutData(position * scale, texCoord * scale);
-	}
+  inline VertexOutData Scaled(xlux::F32 scale) const {
+    return VertexOutData(position * scale, texCoord * scale);
+  }
 
-	inline void Add(const VertexOutData& other)
-	{
-		position += other.position;
-		texCoord += other.texCoord;
-	}
+  inline void Add(const VertexOutData& other) {
+    position += other.position;
+    texCoord += other.texCoord;
+  }
 };
 
-class HelloWorldVShader : public xlux::IShaderG<VertexInData, VertexOutData>
-{
-public:
-	xlux::math::Mat4x4 model = xlux::math::Mat4x4::Identity();
-	xlux::math::Mat4x4 viewProj = xlux::math::Mat4x4::Identity();
+class HelloWorldVShader : public xlux::IShaderG<VertexInData, VertexOutData> {
+ public:
+  xlux::math::Mat4x4 model = xlux::math::Mat4x4::Identity();
+  xlux::math::Mat4x4 viewProj = xlux::math::Mat4x4::Identity();
 
-public:
-	xlux::Bool Execute(const xlux::RawPtr<VertexInData> dataIn, xlux::RawPtr<VertexOutData> dataOut, xlux::RawPtr<xlux::ShaderBuiltIn> builtIn)
-	{
-		dataOut->position = dataIn->position;
-		dataOut->texCoord = dataIn->texCoord;
-		auto pos = viewProj.Mul(model.Mul(xlux::math::Vec4(dataIn->position, 1.0f)));
-		builtIn->Position = xlux::math::Vec4(pos, 1.0f);
-		return true;
-	}
+ public:
+  xlux::Bool Execute(const xlux::RawPtr<VertexInData> dataIn,
+                     xlux::RawPtr<VertexOutData> dataOut,
+                     xlux::RawPtr<xlux::ShaderBuiltIn> builtIn) {
+    dataOut->position = dataIn->position;
+    dataOut->texCoord = dataIn->texCoord;
+    auto pos =
+        viewProj.Mul(model.Mul(xlux::math::Vec4(dataIn->position, 1.0f)));
+    builtIn->Position = xlux::math::Vec4(pos, 1.0f);
+    return true;
+  }
 };
 
-class HelloWorldFShader : public xlux::IShaderG<VertexOutData, xlux::FragmentShaderOutput>
-{
-public:
-	xlux::RawPtr<xlux::Texture2D> texture;
+class HelloWorldFShader
+    : public xlux::IShaderG<VertexOutData, xlux::FragmentShaderOutput> {
+ public:
+  xlux::RawPtr<xlux::Texture2D> texture;
 
-public:
-	xlux::Bool Execute(const xlux::RawPtr<VertexOutData> dataIn, xlux::RawPtr<xlux::FragmentShaderOutput> dataOut, xlux::RawPtr<xlux::ShaderBuiltIn> builtIn)
-	{
-		(void)builtIn; // unused
-		dataOut->Color[0] = texture->Sample(dataIn->texCoord);
-		return true;
-	}
+ public:
+  xlux::Bool Execute(const xlux::RawPtr<VertexOutData> dataIn,
+                     xlux::RawPtr<xlux::FragmentShaderOutput> dataOut,
+                     xlux::RawPtr<xlux::ShaderBuiltIn> builtIn) {
+    (void)builtIn;  // unused
+    dataOut->Color[0] = texture->Sample(dataIn->texCoord);
+    return true;
+  }
 };
 
-int main()
-{
-	xlux::Logger::Init();
-	Window::Create("Xlux Engine Sandbox - Jaysmito Mukherjee", 640, 480);
-	xlux::log::Info("Xlux - High Performance Software Renderer Device");
+int main() {
+  xlux::Logger::Init();
+  Window::Create("Xlux Engine Sandbox - Jaysmito Mukherjee", 640, 480);
+  xlux::log::Info("Xlux - High Performance Software Renderer Device");
 
-	auto device = xlux::Device::Create();
+  auto device = xlux::Device::Create();
 
-	auto framebuffer = Window::GetFramebuffer();
+  auto framebuffer = Window::GetFramebuffer();
 
-	auto vertexShader = xlux::CreateRawPtr<HelloWorldVShader>();
-	auto fragmentShader = xlux::CreateRawPtr<HelloWorldFShader>();
-	auto interpolator = xlux::CreateRawPtr<xlux::BasicInterpolator<VertexOutData>>();
+  auto vertexShader = xlux::CreateRawPtr<HelloWorldVShader>();
+  auto fragmentShader = xlux::CreateRawPtr<HelloWorldFShader>();
+  auto interpolator =
+      xlux::CreateRawPtr<xlux::BasicInterpolator<VertexOutData>>();
 
-	auto createInfo = xlux::PipelineCreateInfo()
-		.SetShader(vertexShader, xlux::ShaderStage_Vertex)
-		.SetShader(fragmentShader, xlux::ShaderStage_Fragment)
-		.SetInterpolator(interpolator)
-		.SetVertexItemSize(sizeof(VertexInData))
-		.SetVertexToFragmentDataSize(sizeof(VertexOutData));
+  auto createInfo = xlux::PipelineCreateInfo()
+                        .SetShader(vertexShader, xlux::ShaderStage_Vertex)
+                        .SetShader(fragmentShader, xlux::ShaderStage_Fragment)
+                        .SetInterpolator(interpolator)
+                        .SetVertexItemSize(sizeof(VertexInData))
+                        .SetVertexToFragmentDataSize(sizeof(VertexOutData));
 
-	auto pipeline = device->CreatePipeline(createInfo);
-	
-	const auto vertices = std::vector<VertexInData>{
-		VertexInData(xlux::math::Vec3(-0.5f, -0.5f, 0.0f), xlux::math::Vec3(0.0f, 0.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(0.5f, -0.5f, 0.0f), xlux::math::Vec3(1.0f, 0.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(-0.5f,  0.5f, 0.0f), xlux::math::Vec3(0.0f, 1.0f, 0.0f)),
-		VertexInData(xlux::math::Vec3(0.5f,  0.5f, 0.0f), xlux::math::Vec3(1.0f, 1.0f, 0.0f))
-	};
+  auto pipeline = device->CreatePipeline(createInfo);
 
-	const auto indices = std::vector<xlux::U32>{
-		0, 1, 2,
-		3, 2, 1
-	};
+  const auto vertices = std::vector<VertexInData>{
+      VertexInData(xlux::math::Vec3(-0.5f, -0.5f, 0.0f),
+                   xlux::math::Vec3(0.0f, 0.0f, 0.0f)),
+      VertexInData(xlux::math::Vec3(0.5f, -0.5f, 0.0f),
+                   xlux::math::Vec3(1.0f, 0.0f, 0.0f)),
+      VertexInData(xlux::math::Vec3(-0.5f, 0.5f, 0.0f),
+                   xlux::math::Vec3(0.0f, 1.0f, 0.0f)),
+      VertexInData(xlux::math::Vec3(0.5f, 0.5f, 0.0f),
+                   xlux::math::Vec3(1.0f, 1.0f, 0.0f))};
 
-	stbi_set_flip_vertically_on_load(true);
-	xlux::I32 tWidth = 0, tHeight = 0, tChannels = 0;
-	auto textureData = stbi_loadf((xlux::utils::GetExecutableDirectory() + "/logo.jpg").c_str(), &tWidth, &tHeight, &tChannels, 3);
-	auto texture = device->CreateTexture2D(tWidth, tHeight, xlux::TexelFormat_RGB);
-	
+  const auto indices = std::vector<xlux::U32>{0, 1, 2, 3, 2, 1};
 
-	auto totalSize = sizeof(VertexInData) * vertices.size() + sizeof(xlux::U32) * indices.size() + texture->GetSizeInBytes();
-	auto deviceMemory = device->AllocateMemory(totalSize);
+  stbi_set_flip_vertically_on_load(true);
+  xlux::I32 tWidth = 0, tHeight = 0, tChannels = 0;
+  auto textureData =
+      stbi_loadf((xlux::utils::GetExecutableDirectory() + "/logo.jpg").c_str(),
+                 &tWidth, &tHeight, &tChannels, 3);
+  auto texture =
+      device->CreateTexture2D(tWidth, tHeight, xlux::TexelFormat_RGB);
 
-	auto vertexBuffer = device->CreateBuffer(sizeof(VertexInData) * vertices.size());
-	vertexBuffer->BindMemory(deviceMemory, 0);
-	vertexBuffer->SetData(vertices.data(), sizeof(VertexInData) * vertices.size());
+  auto totalSize = sizeof(VertexInData) * vertices.size() +
+                   sizeof(xlux::U32) * indices.size() +
+                   texture->GetSizeInBytes();
+  auto deviceMemory = device->AllocateMemory(totalSize);
 
-	auto indexBuffer = device->CreateBuffer(sizeof(xlux::U32) * indices.size());
-	indexBuffer->BindMemory(deviceMemory, sizeof(VertexInData) * vertices.size());
-	indexBuffer->SetData(indices.data(), sizeof(xlux::U32) * indices.size());
+  auto vertexBuffer =
+      device->CreateBuffer(sizeof(VertexInData) * vertices.size());
+  vertexBuffer->BindMemory(deviceMemory, 0);
+  vertexBuffer->SetData(vertices.data(),
+                        sizeof(VertexInData) * vertices.size());
 
-	auto textureBuffer = device->CreateBuffer(texture->GetSizeInBytes());
-	textureBuffer->BindMemory(deviceMemory, sizeof(VertexInData) * vertices.size() + sizeof(xlux::U32) * indices.size());
-	texture->BindBuffer(textureBuffer);
-	texture->SetData(textureData, texture->GetSizeInBytes(), 0);
-	stbi_image_free(textureData);
+  auto indexBuffer = device->CreateBuffer(sizeof(xlux::U32) * indices.size());
+  indexBuffer->BindMemory(deviceMemory, sizeof(VertexInData) * vertices.size());
+  indexBuffer->SetData(indices.data(), sizeof(xlux::U32) * indices.size());
 
+  auto textureBuffer = device->CreateBuffer(texture->GetSizeInBytes());
+  textureBuffer->BindMemory(deviceMemory,
+                            sizeof(VertexInData) * vertices.size() +
+                                sizeof(xlux::U32) * indices.size());
+  texture->BindBuffer(textureBuffer);
+  texture->SetData(textureData, texture->GetSizeInBytes(), 0);
+  stbi_image_free(textureData);
 
-	auto renderer = device->CreateRenderer();
+  auto renderer = device->CreateRenderer();
 
-	auto prevTime = xlux::utils::GetTime(), currTime = xlux::utils::GetTime(), deltaTime = 0.0f;
+  auto prevTime = xlux::utils::GetTime(), currTime = xlux::utils::GetTime(),
+       deltaTime = 0.0f;
 
-	auto proj = xlux::math::Mat4x4::Perspective(xlux::math::ToRadians(60.0f), (float)framebuffer->GetWidth() / (float)framebuffer->GetHeight(), 0.1f, 100.0f);
-	auto view = xlux::math::Mat4x4::LookAt(xlux::math::Vec3(3.0f, 3.0f, 3.0f), xlux::math::Vec3(0.0f, 0.0f, 0.0f), xlux::math::Vec3(0.0f, 1.0f, 0.0f));
+  auto proj = xlux::math::Mat4x4::Perspective(
+      xlux::math::ToRadians(60.0f),
+      (float)framebuffer->GetWidth() / (float)framebuffer->GetHeight(), 0.1f,
+      100.0f);
+  auto view = xlux::math::Mat4x4::LookAt(xlux::math::Vec3(3.0f, 3.0f, 3.0f),
+                                         xlux::math::Vec3(0.0f, 0.0f, 0.0f),
+                                         xlux::math::Vec3(0.0f, 1.0f, 0.0f));
 
-	fragmentShader->texture = texture;
+  fragmentShader->texture = texture;
 
-	while (!Window::HasClosed())
-	{
-		currTime = xlux::utils::GetTime();
-		deltaTime = currTime - prevTime;
-		prevTime = currTime;
+  while (!Window::HasClosed()) {
+    currTime = xlux::utils::GetTime();
+    deltaTime = currTime - prevTime;
+    prevTime = currTime;
 
-		Window::SetTitle("Xlux Engine [Transforms] - Jaysmito Mukherjee - FPS: " + std::to_string(1.0f / deltaTime));
+    Window::SetTitle("Xlux Engine [Transforms] - Jaysmito Mukherjee - FPS: " +
+                     std::to_string(1.0f / deltaTime));
 
-		vertexShader->model = xlux::math::Mat4x4::RotateY(currTime * 0.5f);
-		vertexShader->viewProj = proj.Mul(view);
+    vertexShader->model = xlux::math::Mat4x4::RotateY(currTime * 0.5f);
+    vertexShader->viewProj = proj.Mul(view);
 
-		renderer->BeginFrame();
-		renderer->BindFramebuffer(framebuffer);
-		renderer->SetViewport(0, 0, framebuffer->GetWidth(), framebuffer->GetHeight());
-		renderer->SetClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-		renderer->Clear();
-		renderer->BindPipeline(pipeline);
-		renderer->DrawIndexed(vertexBuffer, indexBuffer, static_cast<xlux::U32>(indices.size()));
-		renderer->EndFrame();
+    renderer->BeginFrame();
+    renderer->BindFramebuffer(framebuffer);
+    renderer->SetViewport(0, 0, framebuffer->GetWidth(),
+                          framebuffer->GetHeight());
+    renderer->SetClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+    renderer->Clear();
+    renderer->BindPipeline(pipeline);
+    renderer->DrawIndexed(vertexBuffer, indexBuffer,
+                          static_cast<xlux::U32>(indices.size()));
+    renderer->EndFrame();
 
+    Window::SwapBuffer();
+    Window::Update();
+  }
 
-		Window::SwapBuffer();
-		Window::Update();
-	}
+  device->DestroyRenderer(renderer);
+  device->DestroyPipeline(pipeline);
+  device->DestroyTexture(texture);
+  device->DestroyBuffer(textureBuffer);
+  device->DestroyBuffer(vertexBuffer);
+  device->DestroyBuffer(indexBuffer);
+  device->FreeMemory(deviceMemory);
 
-	device->DestroyRenderer(renderer);
-	device->DestroyPipeline(pipeline);
-	device->DestroyTexture(texture);
-	device->DestroyBuffer(textureBuffer);
-	device->DestroyBuffer(vertexBuffer);
-	device->DestroyBuffer(indexBuffer);
-	device->FreeMemory(deviceMemory);
+  delete vertexShader;
+  delete fragmentShader;
+  delete interpolator;
 
-	delete vertexShader;
-	delete fragmentShader;
-	delete interpolator;
-
-	xlux::Device::Destroy(device);
-	Window::Destroy();
-	xlux::Logger::Shutdown();
+  xlux::Device::Destroy(device);
+  Window::Destroy();
+  xlux::Logger::Shutdown();
 }

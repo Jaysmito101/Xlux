@@ -1,18 +1,11 @@
 #include "Impl/Pipeline.hpp"
 
-namespace xlux
-{
+namespace xlux {
 
-	Pipeline::Pipeline(const PipelineCreateInfo& createInfo)
-	{
-		m_CreateInfo = createInfo;
-	}
-
-	Pipeline::~Pipeline()
-	{
-	}
-
-
-
-
+Pipeline::Pipeline(const PipelineCreateInfo& createInfo) {
+  m_CreateInfo = createInfo;
 }
+
+Pipeline::~Pipeline() {}
+
+}  // namespace xlux

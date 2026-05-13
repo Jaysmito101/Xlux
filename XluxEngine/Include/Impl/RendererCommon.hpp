@@ -7,21 +7,18 @@
 #include "Impl/Shader.hpp"
 #include "Impl/Pipeline.hpp"
 
-namespace xlux
-{
+namespace xlux {
 
-	class IFramebuffer;
-	class Device;
-	class Buffer;
-	class Pipeline;
+class IFramebuffer;
+class Device;
+class Buffer;
+class Pipeline;
 
-	struct Viewport
-	{
-		I32 x = 0;
-		I32 y = 0;
-		I32 width = 0;
-		I32 height = 0;
-	};
+struct Viewport {
+  I32 x = 0;
+  I32 y = 0;
+  I32 width = 0;
+  I32 height = 0;
+};
 
-
-}
+}  // namespace xlux

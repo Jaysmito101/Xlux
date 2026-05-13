@@ -32,8 +32,6 @@
 #include <sys/ioctl.h>
 #endif
 
-
-
 // std includes
 #include <string>
 #include <vector>

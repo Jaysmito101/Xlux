@@ -6,36 +6,38 @@
 #include "Impl/RendererCommon.hpp"
 #include "Impl/Shader.hpp"
 
-namespace xlux
-{
-	struct FrameClearWorkerInput
-	{
-		U32 x = 0;
-		U32 y = 0;
-		U32 width = 0;
-		U32 height = 0;
+namespace xlux {
+struct FrameClearWorkerInput {
+  U32 x = 0;
+  U32 y = 0;
+  U32 width = 0;
+  U32 height = 0;
 
-		FrameClearWorkerInput() {};
-	};
+  FrameClearWorkerInput() {};
+};
 
-	class FrameClearWorker : public IJob<FrameClearWorkerInput, U32>
-	{
-	public:
-		FrameClearWorker() = default;
-		~FrameClearWorker() = default;
+class FrameClearWorker : public IJob<FrameClearWorkerInput, U32> {
+ public:
+  FrameClearWorker() = default;
+  ~FrameClearWorker() = default;
 
-		Bool Execute(FrameClearWorkerInput payload, U32& result, Size threadID) override;		
+  Bool Execute(FrameClearWorkerInput payload, U32& result,
+               Size threadID) override;
 
-		inline void SetFramebuffer(RawPtr<IFramebuffer> fbo) { m_Framebuffer = fbo; }
-		inline void SetClearColor(const math::Vec4& color) { m_Color = color; }
-		inline void SetEnableClearDepth(Bool clearDepth) { m_ClearDepth = clearDepth; }
-		inline void SetEnableClearColor(Bool clearColor) { m_ClearColor = clearColor; }
+  inline void SetFramebuffer(RawPtr<IFramebuffer> fbo) { m_Framebuffer = fbo; }
+  inline void SetClearColor(const math::Vec4& color) { m_Color = color; }
+  inline void SetEnableClearDepth(Bool clearDepth) {
+    m_ClearDepth = clearDepth;
+  }
+  inline void SetEnableClearColor(Bool clearColor) {
+    m_ClearColor = clearColor;
+  }
 
-	private:
-		RawPtr<IFramebuffer> m_Framebuffer = nullptr;
-		Bool m_ClearColor = true;
-		Bool m_ClearDepth = true;
-		math::Vec4 m_Color = { 0.0f, 0.0f, 0.0f, 1.0f };
-	};
+ private:
+  RawPtr<IFramebuffer> m_Framebuffer = nullptr;
+  Bool m_ClearColor = true;
+  Bool m_ClearDepth = true;
+  math::Vec4 m_Color = {0.0f, 0.0f, 0.0f, 1.0f};
+};
 
-}
+}  // namespace xlux
