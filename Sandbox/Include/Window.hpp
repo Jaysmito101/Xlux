@@ -61,6 +61,6 @@ public:
 	virtual void SetColorPixel(xlux::I32 channel, xlux::I32 x, xlux::I32 y, xlux::F32 r, xlux::F32 g, xlux::F32 b, xlux::F32 a) override;
 	virtual void SetDepthPixel(xlux::I32 x, xlux::I32 y, xlux::F32 depth) override;
 
-	virtual void GetColorPixel(xlux::I32 channel, xlux::I32 x, xlux::I32 y, xlux::F32& r, xlux::F32& g, xlux::F32& b, xlux::F32& a) const;
-	virtual void GetDepthPixel(xlux::I32 x, xlux::I32 y, xlux::F32& depth) const;
+	virtual void GetColorPixel(xlux::I32 channel, xlux::I32 x, xlux::I32 y, xlux::F32& r, xlux::F32& g, xlux::F32& b, xlux::F32& a) const override;
+	virtual void GetDepthPixel(xlux::I32 x, xlux::I32 y, xlux::F32& depth) const override;
 };
