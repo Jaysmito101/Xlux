@@ -75,7 +75,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 	{
 	case WM_CREATE:
 	{
-		RECT r = { 0 };
+		RECT r = {};
 		GetClientRect(s_WindowHandle, &r);
 		break;
 	}
