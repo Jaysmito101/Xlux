@@ -64,7 +64,7 @@ class XLUX_API Renderer {
   static constexpr U32 k_FragmentShaderWorkerCount = 16;
   static constexpr U32 k_VertexShaderWorkerCount = 8;
   
-  static constexpr U32 k_FrameClearWorkerCount = 4;
+  static constexpr U32 k_FrameClearWorkerCount = 8;
 
   using FragmentWorkerPoolType =
       WorkerPool<k_FrameClearWorkerCount, FrameClearWorkerInput, FrameClearWorker>;
