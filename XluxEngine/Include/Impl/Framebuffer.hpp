@@ -53,13 +53,11 @@ class IFramebuffer {
     std::set<U32> overlappingTiles;
 
     const auto tileSize = GetTileSize();
-    const auto tilesX = (width + tileSize.x - 1) / tileSize.x;
-    const auto tilesY = (height + tileSize.y - 1) / tileSize.y;
     const auto startTileX = x / tileSize.x;
     const auto startTileY = y / tileSize.y;
     const auto tileCount = GetTileCount();
-    const auto endTileX = std::clamp(startTileX + tilesX, U32(0), tileCount.x);
-    const auto endTileY = std::clamp(startTileY + tilesY, U32(0), tileCount.y);
+    const auto endTileX = std::clamp((x + width + tileSize.x - 1) / tileSize.x, U32(0), tileCount.x);
+    const auto endTileY = std::clamp((y + height + tileSize.y - 1) / tileSize.y, U32(0), tileCount.y);
 
     for (U32 tileY = startTileY; tileY < endTileY; ++tileY) {
       for (U32 tileX = startTileX; tileX < endTileX; ++tileX) {
@@ -91,7 +89,7 @@ class IFramebuffer {
       throw std::runtime_error("Tile ID exceeds maximum slot count");
     }
     currentSlotOwner = 0; // Default value indicating no owner
-    return m_SlotUsage[tileId].compare_exchange_weak(currentSlotOwner, threadID, std::memory_order_acquire, std::memory_order_relaxed);
+    return m_SlotUsage[tileId].compare_exchange_strong(currentSlotOwner, threadID, std::memory_order_acquire, std::memory_order_relaxed);
   }
 
   inline void ReleaseSlot(U32 tileId) {
