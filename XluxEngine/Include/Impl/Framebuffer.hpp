@@ -1,13 +1,14 @@
 #pragma once
 
+#include <algorithm>
 #include "Core/Core.hpp"
 
 namespace xlux {
 
 class IFramebuffer {
  public:
-  inline I32 GetWidth() const { return GetSize().x; }
-  inline I32 GetHeight() const { return GetSize().y; }
+  inline I32 GetWidth() const { return this->GetSize().x; }
+  inline I32 GetHeight() const { return this->GetSize().y; }
 
   virtual U32 GetColorAttachmentCount() const = 0;
   virtual Bool HasDepthAttachment() const = 0;
@@ -34,5 +35,83 @@ class IFramebuffer {
   }
 
   virtual ~IFramebuffer() = default;
+
+  inline Pair<U32, U32> GetTileCount() const {
+    auto tileSize = GetTileSize();
+    return MakePair<U32, U32>((GetSize().x + tileSize.x - 1) / tileSize.x,
+                              (GetSize().y + tileSize.y - 1) / tileSize.y);
+  }
+
+  inline std::set<U32> GetOverlappingTiles(U32 x, U32 y, U32 width, U32 height) const {
+    std::set<U32> overlappingTiles;
+
+    const auto tileSize = GetTileSize();
+    const auto tilesX = (width + tileSize.x - 1) / tileSize.x;
+    const auto tilesY = (height + tileSize.y - 1) / tileSize.y;
+    const auto startTileX = x / tileSize.x;
+    const auto startTileY = y / tileSize.y;
+    const auto tileCount = GetTileCount();
+    const auto endTileX = std::clamp(startTileX + tilesX, U32(0), tileCount.x);
+    const auto endTileY = std::clamp(startTileY + tilesY, U32(0), tileCount.y);
+
+    for (U32 tileY = startTileY; tileY < endTileY; ++tileY) {
+      for (U32 tileX = startTileX; tileX < endTileX; ++tileX) {
+        U32 tileId = tileY * tileCount.x + tileX;
+        if (tileId < kMaxSlots) {
+          overlappingTiles.insert(tileId);
+        }
+      }
+    }
+
+    return overlappingTiles;
+  }
+
+  inline Pair<U32, U32> GetTileSize() const {
+    return CalculateTileSize(GetOptimalTilingConfig(), GetSize());
+  }
+
+
+  inline Pair<U32, U32> GetTileOffset(U32 tileId) const {
+    const auto tileCount = GetTileCount();
+    const auto tileSize = GetTileSize();
+    const auto tileX = tileId % tileCount.x;
+    const auto tileY = tileId / tileCount.x;
+    return MakePair<U32, U32>(tileX * tileSize.x, tileY * tileSize.y);
+  }
+
+ private:
+  static Pair<U32, U32> CalculateTileSize(Pair<U32, U32> optimalTiling, Pair<U32, U32> viewportSize) {
+    if (viewportSize.x == 0 || viewportSize.y == 0 || optimalTiling.x == 0 || optimalTiling.y == 0) {
+      return MakePair<U32, U32>(0, 0);
+    }
+    
+    Pair<U32, U32> tileSize = optimalTiling;
+    U32 tilesX = 0;
+    U32 tilesY = 0;
+    
+    while (true) {
+      tilesX = (viewportSize.x + tileSize.x - 1) / tileSize.x;
+      tilesY = (viewportSize.y + tileSize.y - 1) / tileSize.y;
+      
+      if (tilesX * tilesY <= kMaxSlots) {
+        break;
+      }
+      
+      if (tilesX > tilesY) {
+        tileSize.x += optimalTiling.x;
+      } else if (tilesY > tilesX) {
+        tileSize.y += optimalTiling.y;
+      } else {
+        tileSize.x += optimalTiling.x;
+        tileSize.y += optimalTiling.y;
+      }
+    }
+    
+    return MakePair<U32, U32>(std::move(tileSize.x), std::move(tileSize.y));
+  }
+
+
+  const static U32 kMaxSlots = 4096;
+  const std::array<std::atomic<int>, kMaxSlots> m_SlotUsage = {};
 };
 }  // namespace xlux
