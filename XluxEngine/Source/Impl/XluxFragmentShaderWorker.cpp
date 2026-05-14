@@ -52,27 +52,33 @@ math::Vec3 FragmentShaderWorker::CalculateBarycentric(const math::Vec2& p,
   return math::Vec3(w, v, u);
 }
 
-Bool FragmentShaderWorker::Execute(FragmentShaderWorkerInput payload, U32 threadID) {
+Bool FragmentShaderWorker::Execute(FragmentShaderWorkerInput payload,
+                                   U32 threadID) {
   (void)threadID;
 
-  
   auto tileOffset = payload.framebuffer->GetTileOffset(payload.slotId);
   auto tileSize = payload.framebuffer->GetTileSize();
-  auto tileEnd = MakePair(std::clamp(tileOffset.x + tileSize.x, 0U, (U32)payload.framebuffer->GetWidth()),
-  std::clamp(tileOffset.y + tileSize.y, 0U, (U32)payload.framebuffer->GetHeight()));
-  
-  auto boundingBox = payload.triangle.GetBoundingBox(); 
-  tileOffset.x = std::max(tileOffset.x, static_cast<U32>(std::max(0.0f, boundingBox[0] - 1.0f)));
-  tileOffset.y = std::max(tileOffset.y, static_cast<U32>(std::max(0.0f, boundingBox[1] - 1.0f)));
-  tileEnd.x = std::min(tileEnd.x, static_cast<U32>(std::max(0.0f, boundingBox[2] + 1.0f)));
-  tileEnd.y = std::min(tileEnd.y, static_cast<U32>(std::max(0.0f, boundingBox[3] + 1.0f)));
+  auto tileEnd = MakePair(std::clamp(tileOffset.x + tileSize.x, 0U,
+                                     (U32)payload.framebuffer->GetWidth()),
+                          std::clamp(tileOffset.y + tileSize.y, 0U,
+                                     (U32)payload.framebuffer->GetHeight()));
 
-  
+  auto boundingBox = payload.triangle.GetBoundingBox();
+  tileOffset.x = std::max(
+      tileOffset.x, static_cast<U32>(std::max(0.0f, boundingBox[0] - 1.0f)));
+  tileOffset.y = std::max(
+      tileOffset.y, static_cast<U32>(std::max(0.0f, boundingBox[1] - 1.0f)));
+  tileEnd.x = std::min(tileEnd.x,
+                       static_cast<U32>(std::max(0.0f, boundingBox[2] + 1.0f)));
+  tileEnd.y = std::min(tileEnd.y,
+                       static_cast<U32>(std::max(0.0f, boundingBox[3] + 1.0f)));
+
   auto interpolator = payload.pipeline->m_CreateInfo.interpolator;
   auto framebuffer = payload.framebuffer;
 
   U32 currentSlotOwner = 0;
-  while (!framebuffer->AcquireSlot(payload.slotId, threadID + 1, currentSlotOwner));
+  while (!framebuffer->AcquireSlot(payload.slotId, threadID + 1,
+                                   currentSlotOwner));
 
   FragmentShaderOutput fragmentShaderOutput = {};
   U8 fragmentInterpolatedInput[1024];
@@ -107,9 +113,10 @@ Bool FragmentShaderWorker::Execute(FragmentShaderWorkerInput payload, U32 thread
 
         auto px = x, py = framebuffer->GetHeight() - 1 - y;
 
-        if (BlendAndApplyDepth(px, py, framebuffer,
-                               payload.pipeline, fragmentShaderOutput.Depth)) {
-          BlendAndApplyColor(px, py, framebuffer, payload.pipeline, fragmentShaderOutput);
+        if (BlendAndApplyDepth(px, py, framebuffer, payload.pipeline,
+                               fragmentShaderOutput.Depth)) {
+          BlendAndApplyColor(px, py, framebuffer, payload.pipeline,
+                             fragmentShaderOutput);
         }
       }
     }
@@ -122,7 +129,8 @@ Bool FragmentShaderWorker::Execute(FragmentShaderWorkerInput payload, U32 thread
 
 Bool FragmentShaderWorker::BlendAndApplyDepth(U32 px, U32 py,
                                               RawPtr<IFramebuffer> framebuffer,
-                                              RawPtr<Pipeline> pipeline, F32 depth) {
+                                              RawPtr<Pipeline> pipeline,
+                                              F32 depth) {
   if (!pipeline->m_CreateInfo.depthTestEnable) return true;
   if (!framebuffer->HasDepthAttachment()) return true;
 
@@ -184,8 +192,7 @@ Bool FragmentShaderWorker::BlendAndApplyDepth(U32 px, U32 py,
 }
 
 void FragmentShaderWorker::BlendAndApplyColor(
-    U32 px, U32 py, RawPtr<IFramebuffer> framebuffer,
-    RawPtr<Pipeline> pipeline,
+    U32 px, U32 py, RawPtr<IFramebuffer> framebuffer, RawPtr<Pipeline> pipeline,
     const FragmentShaderOutput& output) {
   math::Vec4 dstColor = {1.0f, 1.0f, 1.0f, 1.0f};
   math::Vec4 blendedColor = {1.0f, 1.0f, 1.0f, 1.0f};

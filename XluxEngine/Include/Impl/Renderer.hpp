@@ -63,8 +63,10 @@ class XLUX_API Renderer {
 
   static constexpr U32 k_VertexShaderWorkerCount = 8;
 
-  using FrameClearWorkerPoolType = WorkerPool<16, FrameClearWorkerInput, FrameClearWorker>;
-  using FragmentWorkerPoolType = WorkerPool<8, FragmentShaderWorkerInput, FragmentShaderWorker>;
+  using FrameClearWorkerPoolType =
+      WorkerPool<16, FrameClearWorkerInput, FrameClearWorker>;
+  using FragmentWorkerPoolType =
+      WorkerPool<8, FragmentShaderWorkerInput, FragmentShaderWorker>;
 
   Scope<FrameClearWorkerPoolType> m_FrameClearWorker = nullptr;
   Scope<FragmentWorkerPoolType> m_FragmentWorker = nullptr;
@@ -72,7 +74,6 @@ class XLUX_API Renderer {
   RawPtr<ThreadPool<k_VertexShaderWorkerCount, VertexShaderWorkerInput, U32>>
       m_VertexShaderThreadPool;
   RawPtr<IJob<VertexShaderWorkerInput, U32>> m_VertexShaderJob;
-
 
   RawPtr<LinearAllocator> m_VertexToFragmentDataAllocator;
 };

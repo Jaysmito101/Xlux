@@ -10,14 +10,13 @@
 namespace xlux {
 
 Renderer::Renderer() {
-  
   m_VertexShaderJob = CreateRawPtr<VertexShaderWorker>();
   m_VertexShaderThreadPool = CreateRawPtr<
-  ThreadPool<k_VertexShaderWorkerCount, VertexShaderWorkerInput, U32>>(
-    m_VertexShaderJob);
-    
+      ThreadPool<k_VertexShaderWorkerCount, VertexShaderWorkerInput, U32>>(
+      m_VertexShaderJob);
+
   m_FragmentWorker = CreateScope<FragmentWorkerPoolType>();
-  m_FrameClearWorker = CreateScope<FrameClearWorkerPoolType>(); 
+  m_FrameClearWorker = CreateScope<FrameClearWorkerPoolType>();
 
   m_VertexToFragmentDataAllocator = CreateRawPtr<LinearAllocator>(
       1024 * 1024 * 256, k_VertexShaderWorkerCount);  // 256MB x 8 = 2GB
@@ -103,21 +102,19 @@ void Renderer::Clear(Bool color, Bool depth) {
   const auto endX = m_ActiveViewport->x + m_ActiveViewport->width;
   const auto endY = m_ActiveViewport->y + m_ActiveViewport->height;
 
-  FrameClearWorkerInput input = {
-    .slotId = 0,
-    .clearColor = m_ClearColor,
-    .framebuffer = m_ActiveFramebuffer,
-    .shouldClearColor = color,
-    .shouldClearDepth = depth
-  };
+  FrameClearWorkerInput input = {.slotId = 0,
+                                 .clearColor = m_ClearColor,
+                                 .framebuffer = m_ActiveFramebuffer,
+                                 .shouldClearColor = color,
+                                 .shouldClearDepth = depth};
 
-  auto tiles = m_ActiveFramebuffer->GetOverlappingTiles(startX, startY,
-                                               endX - startX, endY - startY);
+  auto tiles = m_ActiveFramebuffer->GetOverlappingTiles(
+      startX, startY, endX - startX, endY - startY);
   for (auto tileId : tiles) {
     input.slotId = tileId;
     m_FrameClearWorker->AddJob(input);
   }
- m_FragmentWorker->WaitForIdle();
+  m_FragmentWorker->WaitForIdle();
 }
 
 void Renderer::SetViewport(I32 x, I32 y, I32 width, I32 height) {
@@ -179,7 +176,6 @@ void Renderer::DrawIndexed(RawPtr<Buffer> vertexBuffer,
     xlux::log::Error("Renderer::DrawIndexed() called with invalid index count");
   }
 #endif
-
 
   auto vertexShaderJob =
       reinterpret_cast<RawPtr<VertexShaderWorker>>(m_VertexShaderJob);
@@ -243,7 +239,6 @@ void Renderer::DrawIndexedOrdered(RawPtr<Buffer> vertexBuffer,
   }
 #endif
 
-
   auto vertexShaderJob =
       reinterpret_cast<RawPtr<VertexShaderWorker>>(m_VertexShaderJob);
 
@@ -279,10 +274,10 @@ Bool Renderer::PassTriangleToFragmentShader(ShaderTriangleRef triangle) {
   auto boundingBox = triangle.GetBoundingBox();  // (xmin, ymin, xmax, ymax)
 
   FragmentShaderWorkerInput input = {
-    .triangle = triangle,
-    .slotId = 0,
-    .pipeline = m_ActivePipeline,
-    .framebuffer = m_ActiveFramebuffer,
+      .triangle = triangle,
+      .slotId = 0,
+      .pipeline = m_ActivePipeline,
+      .framebuffer = m_ActiveFramebuffer,
   };
 
   auto minX = static_cast<I32>(std::floor(boundingBox[0]));
@@ -296,14 +291,13 @@ Bool Renderer::PassTriangleToFragmentShader(ShaderTriangleRef triangle) {
   auto endY = static_cast<U32>(std::max(0, maxY));
 
   auto tiles = m_ActiveFramebuffer->GetOverlappingTiles(
-      startX, startY,
-      endX > startX ? endX - startX : 0,
+      startX, startY, endX > startX ? endX - startX : 0,
       endY > startY ? endY - startY : 0);
   for (auto tileId : tiles) {
     input.slotId = tileId;
     m_FragmentWorker->AddJob(input);
   }
-  
+
   return false;
 }
 

@@ -23,8 +23,10 @@ class FragmentShaderWorker {
                        const math::Vec4& p1, const math::Vec4& p2);
   math::Vec3 CalculateBarycentric(const math::Vec2& p, const math::Vec4& a,
                                   const math::Vec4& b, const math::Vec4& c);
-  Bool BlendAndApplyDepth(U32 px, U32 py, RawPtr<IFramebuffer> fbo, RawPtr<Pipeline> pipeline, F32 depth);
-  void BlendAndApplyColor(U32 px, U32 py, RawPtr<IFramebuffer> fbo, RawPtr<Pipeline> pipeline,
+  Bool BlendAndApplyDepth(U32 px, U32 py, RawPtr<IFramebuffer> fbo,
+                          RawPtr<Pipeline> pipeline, F32 depth);
+  void BlendAndApplyColor(U32 px, U32 py, RawPtr<IFramebuffer> fbo,
+                          RawPtr<Pipeline> pipeline,
                           const FragmentShaderOutput& output);
   F32 CalculateBlendFactor(F32 srcAlpha, F32 dstAlpha,
                            EBlendFunction blendFunction);

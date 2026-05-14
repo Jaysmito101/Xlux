@@ -11,6 +11,7 @@
 #include <memory>
 #include <functional>
 #include <string_view>
+#include <atomic>
 #include <array>
 #include <cstdint>
 
@@ -61,6 +62,9 @@ using F64 = double;
 
 using ValueType = F32;
 
+template <typename T>
+using Atomic = std::atomic<T>;
+
 using String = std::string;
 using WString = std::wstring;
 using StringView = std::string_view;
@@ -95,7 +99,8 @@ struct Pair {
 
   constexpr Pair() : x(0), y(0) {}
   constexpr Pair(const Pair& other) : x(other.x), y(other.y) {}
-  constexpr Pair(Pair&& other) noexcept : x(std::move(other.x)), y(std::move(other.y)) {}
+  constexpr Pair(Pair&& other) noexcept
+      : x(std::move(other.x)), y(std::move(other.y)) {}
   constexpr Pair(A&& x, B&& y) : x(std::forward<A>(x)), y(std::forward<B>(y)) {}
   constexpr Pair(const A& x, const B& y) : x(x), y(y) {}
 
@@ -112,7 +117,7 @@ struct Pair {
       x = std::move(other.x);
       y = std::move(other.y);
     }
-    return *this; 
+    return *this;
   }
 };
 
