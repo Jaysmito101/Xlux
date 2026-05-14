@@ -62,6 +62,12 @@ Bool FragmentShaderWorker::Execute(FragmentShaderWorkerInput payload, U32 thread
   auto tileEnd = MakePair(std::clamp(tileOffset.x + tileSize.x, 0U, (U32)payload.framebuffer->GetWidth()),
   std::clamp(tileOffset.y + tileSize.y, 0U, (U32)payload.framebuffer->GetHeight()));
   
+  auto boundingBox = payload.triangle.GetBoundingBox(); 
+  tileOffset.x = std::max(tileOffset.x, (U32)std::abs(boundingBox[0] - 1));
+  tileOffset.y = std::max(tileOffset.y, (U32)std::abs(boundingBox[1] - 1));
+  tileEnd.x = std::min(tileEnd.x, (U32)std::abs(boundingBox[2] + 1));
+  tileEnd.y = std::min(tileEnd.y, (U32)std::abs(boundingBox[3] + 1));
+
   
   auto interpolator = payload.pipeline->m_CreateInfo.interpolator;
   auto framebuffer = payload.framebuffer;
