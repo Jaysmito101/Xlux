@@ -17,7 +17,7 @@ Renderer::Renderer() {
     m_VertexShaderJob);
     
   m_FragmentWorker = CreateScope<FragmentWorkerPoolType>();
-  m_FragmentWorker2 = CreateScope<FragmentWorkerPoolType2>(); 
+  m_FrameClearWorker = CreateScope<FrameClearWorkerPoolType>(); 
 
   m_VertexToFragmentDataAllocator = CreateRawPtr<LinearAllocator>(
       1024 * 1024 * 256, k_VertexShaderWorkerCount);  // 256MB x 8 = 2GB
@@ -25,7 +25,7 @@ Renderer::Renderer() {
 
 Renderer::~Renderer() {
   m_FragmentWorker.reset();
-  m_FragmentWorker2.reset();
+  m_FrameClearWorker.reset();
 
   delete m_VertexShaderThreadPool;
   delete m_VertexShaderJob;
@@ -71,8 +71,8 @@ void Renderer::Flush() {
   }
 #endif
   m_VertexShaderThreadPool->WaitJobDone();
+  m_FrameClearWorker->WaitForIdle();
   m_FragmentWorker->WaitForIdle();
-  m_FragmentWorker2->WaitForIdle();
   m_VertexToFragmentDataAllocator->Reset();
 }
 
@@ -115,7 +115,7 @@ void Renderer::Clear(Bool color, Bool depth) {
                                                endX - startX, endY - startY);
   for (auto tileId : tiles) {
     input.slotId = tileId;
-    m_FragmentWorker->AddJob(input);
+    m_FrameClearWorker->AddJob(input);
   }
  m_FragmentWorker->WaitForIdle();
 }
@@ -206,7 +206,7 @@ void Renderer::DrawIndexed(RawPtr<Buffer> vertexBuffer,
 
   if (!m_DetachedRendering) {
     m_VertexShaderThreadPool->WaitJobDone();
-    m_FragmentWorker2->WaitForIdle();
+    m_FragmentWorker->WaitForIdle();
   }
 }
 
@@ -271,7 +271,7 @@ void Renderer::DrawIndexedOrdered(RawPtr<Buffer> vertexBuffer,
 
   if (!m_DetachedRendering) {
     m_VertexShaderThreadPool->WaitJobDone();
-    m_FragmentWorker2->WaitForIdle();
+    m_FragmentWorker->WaitForIdle();
   }
 }
 
@@ -291,7 +291,7 @@ Bool Renderer::PassTriangleToFragmentShader(ShaderTriangleRef triangle) {
       static_cast<I32>(boundingBox[3] - boundingBox[1]));
   for (auto tileId : tiles) {
     input.slotId = tileId;
-    m_FragmentWorker2->AddJob(input);
+    m_FragmentWorker->AddJob(input);
   }
   
   return false;

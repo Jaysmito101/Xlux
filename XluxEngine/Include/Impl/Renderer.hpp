@@ -61,18 +61,13 @@ class XLUX_API Renderer {
   std::optional<Viewport> m_ActiveViewport;
   void* m_RendererUserData = nullptr;
 
-  static constexpr U32 k_FragmentShaderWorkerCount = 16;
   static constexpr U32 k_VertexShaderWorkerCount = 8;
-  
-  static constexpr U32 k_FrameClearWorkerCount = 8;
 
-  using FragmentWorkerPoolType =
-      WorkerPool<k_FrameClearWorkerCount, FrameClearWorkerInput, FrameClearWorker>;
-  using FragmentWorkerPoolType2 = WorkerPool<k_FragmentShaderWorkerCount,
-                                      FragmentShaderWorkerInput, FragmentShaderWorker>;
+  using FrameClearWorkerPoolType = WorkerPool<16, FrameClearWorkerInput, FrameClearWorker>;
+  using FragmentWorkerPoolType = WorkerPool<8, FragmentShaderWorkerInput, FragmentShaderWorker>;
 
+  Scope<FrameClearWorkerPoolType> m_FrameClearWorker = nullptr;
   Scope<FragmentWorkerPoolType> m_FragmentWorker = nullptr;
-  Scope<FragmentWorkerPoolType2> m_FragmentWorker2 = nullptr;
 
   RawPtr<ThreadPool<k_VertexShaderWorkerCount, VertexShaderWorkerInput, U32>>
       m_VertexShaderThreadPool;
