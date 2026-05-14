@@ -7,23 +7,24 @@ namespace xlux {
 
 class IFramebuffer {
  public:
-  inline I32 GetWidth() const { return this->GetSize().x; }
-  inline I32 GetHeight() const { return this->GetSize().y; }
-
-  virtual U32 GetColorAttachmentCount() const = 0;
-  virtual Bool HasDepthAttachment() const = 0;
+ 
+ inline I32 GetWidth() const { return this->GetSize().x; }
+ inline I32 GetHeight() const { return this->GetSize().y; }
+ 
+ virtual U32 GetColorAttachmentCount() const = 0;
+ virtual Bool HasDepthAttachment() const = 0;
   virtual Pair<U32, U32> GetSize() const = 0;
   virtual void SetColorPixel(I32 channel, I32 x, I32 y, F32 r, F32 g, F32 b,
-                             F32 a) = 0;
-  virtual void SetDepthPixel(I32 x, I32 y, F32 depth) {
-    (void)x, (void)y, (void)depth, throw std::runtime_error("Not implemented");
-  }
-  virtual void GetColorPixel(I32 channel, I32 x, I32 y, F32& r, F32& g, F32& b,
-                             F32& a) const = 0;
+    F32 a) = 0;
+    virtual void SetDepthPixel(I32 x, I32 y, F32 depth) {
+      (void)x, (void)y, (void)depth, throw std::runtime_error("Not implemented");
+    }
+    virtual void GetColorPixel(I32 channel, I32 x, I32 y, F32& r, F32& g, F32& b,
+      F32& a) const = 0;
   virtual void GetDepthPixel(I32 x, I32 y, F32& depth) const {
     (void)x, (void)y, (void)depth, throw std::runtime_error("Not implemented");
   }
-
+  
   // This function can be used by the renderer to determine the optimal tiling
   // configuration for the framebuffer. The default implementation returns a
   // tile size of 64x64. The purpose for this is to allow the render to 
@@ -33,7 +34,13 @@ class IFramebuffer {
   constexpr virtual Pair<U32, U32> GetOptimalTilingConfig() const {
     return MakePair<U32, U32>(64, 64);
   }
-
+  
+  IFramebuffer() {
+    // Initialize slot usage to 0
+    for (auto& slot : m_SlotUsage) {
+      slot.store(0, std::memory_order_relaxed);
+    }
+  }
   virtual ~IFramebuffer() = default;
 
   inline Pair<U32, U32> GetTileCount() const {
@@ -79,6 +86,21 @@ class IFramebuffer {
     return MakePair<U32, U32>(tileX * tileSize.x, tileY * tileSize.y);
   }
 
+  inline Bool AcquireSlot(U32 tileId, U32 threadID, U32& currentSlotOwner) {
+    if (tileId >= kMaxSlots) {
+      throw std::runtime_error("Tile ID exceeds maximum slot count");
+    }
+    currentSlotOwner = 0; // Default value indicating no owner
+    return m_SlotUsage[tileId].compare_exchange_weak(currentSlotOwner, threadID, std::memory_order_acquire, std::memory_order_relaxed);
+  }
+
+  inline void ReleaseSlot(U32 tileId) {
+    if (tileId >= kMaxSlots) {
+      throw std::runtime_error("Tile ID exceeds maximum slot count");
+    }
+    m_SlotUsage[tileId].store(0, std::memory_order_release);
+  }
+
  private:
   static Pair<U32, U32> CalculateTileSize(Pair<U32, U32> optimalTiling, Pair<U32, U32> viewportSize) {
     if (viewportSize.x == 0 || viewportSize.y == 0 || optimalTiling.x == 0 || optimalTiling.y == 0) {
@@ -112,6 +134,6 @@ class IFramebuffer {
 
 
   const static U32 kMaxSlots = 4096;
-  const std::array<std::atomic<int>, kMaxSlots> m_SlotUsage = {};
+  std::array<std::atomic<U32>, kMaxSlots> m_SlotUsage = {};
 };
 }  // namespace xlux

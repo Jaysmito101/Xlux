@@ -55,7 +55,6 @@ math::Vec3 FragmentShaderWorker::CalculateBarycentric(const math::Vec2& p,
 Bool FragmentShaderWorker::Execute(FragmentShaderWorkerInput payload, U32 threadID) {
   (void)threadID;
 
-  // payload.triangle.Log();
   
   auto tileOffset = payload.framebuffer->GetTileOffset(payload.slotId);
   auto tileSize = payload.framebuffer->GetTileSize();
@@ -71,6 +70,9 @@ Bool FragmentShaderWorker::Execute(FragmentShaderWorkerInput payload, U32 thread
   
   auto interpolator = payload.pipeline->m_CreateInfo.interpolator;
   auto framebuffer = payload.framebuffer;
+
+  U32 currentSlotOwner = 0;
+  while (!framebuffer->AcquireSlot(payload.slotId, threadID + 1, currentSlotOwner));
 
   FragmentShaderOutput fragmentShaderOutput = {};
   U8 fragmentInterpolatedInput[1024];
@@ -112,6 +114,8 @@ Bool FragmentShaderWorker::Execute(FragmentShaderWorkerInput payload, U32 thread
       }
     }
   }
+
+  framebuffer->ReleaseSlot(payload.slotId);
 
   return false;
 }
