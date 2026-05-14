@@ -96,8 +96,6 @@ namespace xlux {
                     if (!m_JobFunction->Execute(job, m_ID)) {
                         // Handle job execution failure if necessary
                     }
-                } else {
-                    std::this_thread::yield();
                 }
             }
         }
