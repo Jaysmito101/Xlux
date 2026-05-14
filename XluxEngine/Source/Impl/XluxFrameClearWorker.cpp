@@ -1,32 +1,26 @@
+#include "Core/Logger.hpp"
 #include "Impl/FrameClearWorker.hpp"
 #include "Impl/Framebuffer.hpp"
 
 namespace xlux {
-Bool FrameClearWorker::Execute(FrameClearWorkerInput payload, U32& result,
-                               Size threadID) {
-  (void)result, (void)threadID;
+Bool FrameClearWorker::Execute(FrameClearWorkerInput payload, U32 threadID) {
+  (void)threadID;
 
-  const auto maxX = std::min(payload.x + payload.width,
-                             static_cast<U32>(m_Framebuffer->GetWidth()));
-  const auto maxY = std::min(payload.y + payload.height,
-                             static_cast<U32>(m_Framebuffer->GetHeight()));
+  auto tileOffset = payload.framebuffer->GetTileOffset(payload.slotId);
+  auto tileSize = payload.framebuffer->GetTileSize();
 
-  if (m_ClearColor) {
-    for (auto ch = 0; ch < (I32)m_Framebuffer->GetColorAttachmentCount();
-         ++ch) {
-      for (auto y = payload.y; y < maxY; ++y) {
-        for (auto x = payload.x; x < maxX; ++x) {
-          m_Framebuffer->SetColorPixel(ch, x, y, m_Color[0], m_Color[1],
-                                       m_Color[2], m_Color[3]);
+  auto pixel = payload.clearColor.ToVec4();
+
+  for (U32 x = tileOffset.x; x < tileOffset.x + tileSize.x; ++x) {
+    for (U32 y = tileOffset.y; y < tileOffset.y + tileSize.y; ++y) {
+      if (payload.shouldClearColor) {
+        for (U32 ch = 0; ch < payload.framebuffer->GetColorAttachmentCount(); ++ch) {
+          payload.framebuffer->SetColorPixel(ch, x, y, pixel[0], pixel[1], pixel[2], pixel[3]);
         }
       }
-    }
-  }
 
-  if (m_ClearDepth && m_Framebuffer->HasDepthAttachment()) {
-    for (auto y = payload.y; y < maxY; ++y) {
-      for (auto x = payload.x; x < maxX; ++x) {
-        m_Framebuffer->SetDepthPixel(x, y, 10000000.0f);
+      if (payload.shouldClearDepth && payload.framebuffer->HasDepthAttachment()) {
+        payload.framebuffer->SetDepthPixel(x, y, 10000000.0f);
       }
     }
   }

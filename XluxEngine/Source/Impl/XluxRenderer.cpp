@@ -1,3 +1,5 @@
+#include "Core/Logger.hpp"
+#include "Core/Types.hpp"
 #include "Impl/Renderer.hpp"
 #include "Impl/DeviceMemory.hpp"
 #include "Impl/Buffer.hpp"
@@ -8,16 +10,14 @@
 namespace xlux {
 
 Renderer::Renderer() {
-  m_FrameClearJob = CreateRawPtr<FrameClearWorker>();
-  m_FrameClearThreadPool = CreateRawPtr<
-      ThreadPool<k_FrameClearWorkerCount, FrameClearWorkerInput, U32>>(
-      m_FrameClearJob);
-
+  
   m_VertexShaderJob = CreateRawPtr<VertexShaderWorker>();
   m_VertexShaderThreadPool = CreateRawPtr<
-      ThreadPool<k_VertexShaderWorkerCount, VertexShaderWorkerInput, U32>>(
-      m_VertexShaderJob);
-
+  ThreadPool<k_VertexShaderWorkerCount, VertexShaderWorkerInput, U32>>(
+    m_VertexShaderJob);
+    
+  m_FragmentWorker = CreateScope<FragmentWorkerPoolType>();
+        
   m_FragmentShaderJob = CreateRawPtr<FragmentShaderWorker>();
   m_FragmentShaderThreadPool = CreateRawPtr<
       ThreadPool<k_FragmentShaderWorkerCountX * k_FragmentShaderWorkerCountY,
@@ -28,8 +28,7 @@ Renderer::Renderer() {
 }
 
 Renderer::~Renderer() {
-  delete m_FrameClearThreadPool;
-  delete m_FrameClearJob;
+  m_FragmentWorker.reset();
 
   delete m_VertexShaderThreadPool;
   delete m_VertexShaderJob;
@@ -76,7 +75,7 @@ void Renderer::Flush() {
 #endif
   m_VertexShaderThreadPool->WaitJobDone();
   m_FragmentShaderThreadPool->WaitJobDone();
-  m_FrameClearThreadPool->WaitJobDone();
+  m_FragmentWorker->WaitForIdle();
   m_VertexToFragmentDataAllocator->Reset();
 }
 
@@ -107,33 +106,26 @@ void Renderer::Clear(Bool color, Bool depth) {
   }
 #endif
 
-  auto frameClearJob =
-      reinterpret_cast<RawPtr<FrameClearWorker>>(m_FrameClearJob);
-
-  frameClearJob->SetFramebuffer(m_ActiveFramebuffer);
-  frameClearJob->SetClearColor(m_ClearColor);
-  frameClearJob->SetEnableClearColor(color);
-  frameClearJob->SetEnableClearDepth(depth);
-
   const auto startX = m_ActiveViewport->x;
   const auto startY = m_ActiveViewport->y;
   const auto endX = m_ActiveViewport->x + m_ActiveViewport->width;
   const auto endY = m_ActiveViewport->y + m_ActiveViewport->height;
 
-  const auto tileSize = 16;
-  static FrameClearWorkerInput input = {};
+  FrameClearWorkerInput input = {
+    .slotId = 0,
+    .clearColor = m_ClearColor,
+    .framebuffer = m_ActiveFramebuffer,
+    .shouldClearColor = color,
+    .shouldClearDepth = depth
+  };
 
-  for (auto y = startY; y < endY; y += tileSize) {
-    for (auto x = startX; x < endX; x += tileSize) {
-      input.x = x;
-      input.y = y;
-      input.width = tileSize;
-      input.height = tileSize;
-      m_FrameClearThreadPool->AddJob(input);
-    }
+  auto tiles = m_ActiveFramebuffer->GetOverlappingTiles(startX, startY,
+                                               endX - startX, endY - startY);
+  for (auto tileId : tiles) {
+    input.slotId = tileId;
+    m_FragmentWorker->AddJob(input);
   }
-
-  m_FrameClearThreadPool->WaitJobDone();
+ m_FragmentWorker->WaitForIdle();
 }
 
 void Renderer::SetViewport(I32 x, I32 y, I32 width, I32 height) {
@@ -196,7 +188,6 @@ void Renderer::DrawIndexed(RawPtr<Buffer> vertexBuffer,
   }
 #endif
 
-  m_VertexToFragmentDataAllocator->Reset();
 
   auto vertexShaderJob =
       reinterpret_cast<RawPtr<VertexShaderWorker>>(m_VertexShaderJob);
@@ -260,7 +251,6 @@ void Renderer::DrawIndexedOrdered(RawPtr<Buffer> vertexBuffer,
   }
 #endif
 
-  m_VertexToFragmentDataAllocator->Reset();
 
   auto vertexShaderJob =
       reinterpret_cast<RawPtr<VertexShaderWorker>>(m_VertexShaderJob);

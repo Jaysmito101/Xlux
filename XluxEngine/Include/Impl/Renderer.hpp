@@ -2,6 +2,7 @@
 
 #include "Core/Core.hpp"
 #include "Core/ThreadPool.hpp"
+#include "Core/WorkerPool.hpp"
 #include "Math/Math.hpp"
 
 #include "Impl/RendererCommon.hpp"
@@ -63,13 +64,16 @@ class XLUX_API Renderer {
   static constexpr U32 k_FragmentShaderWorkerCountX = 8;
   static constexpr U32 k_FragmentShaderWorkerCountY = 6;
   static constexpr U32 k_VertexShaderWorkerCount = 8;
-  static constexpr U32 k_FrameClearWorkerCount = 8;
+  
+  static constexpr U32 k_FrameClearWorkerCount = 16;
+
   U32 m_FragmentShaderTileWidth = 0;
   U32 m_FragmentShaderTileHeight = 0;
 
-  RawPtr<ThreadPool<k_FrameClearWorkerCount, FrameClearWorkerInput, U32>>
-      m_FrameClearThreadPool;
-  RawPtr<IJob<FrameClearWorkerInput, U32>> m_FrameClearJob;
+  using FragmentWorkerPoolType =
+      WorkerPool<k_FrameClearWorkerCount, FrameClearWorkerInput, FrameClearWorker>;
+
+  Scope<FragmentWorkerPoolType> m_FragmentWorker = nullptr;
 
   RawPtr<ThreadPool<k_VertexShaderWorkerCount, VertexShaderWorkerInput, U32>>
       m_VertexShaderThreadPool;
