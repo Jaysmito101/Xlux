@@ -62,10 +62,10 @@ Bool FragmentShaderWorker::Execute(FragmentShaderWorkerInput payload, U32 thread
   std::clamp(tileOffset.y + tileSize.y, 0U, (U32)payload.framebuffer->GetHeight()));
   
   auto boundingBox = payload.triangle.GetBoundingBox(); 
-  tileOffset.x = std::max(tileOffset.x, (U32)std::abs(boundingBox[0] - 1));
-  tileOffset.y = std::max(tileOffset.y, (U32)std::abs(boundingBox[1] - 1));
-  tileEnd.x = std::min(tileEnd.x, (U32)std::abs(boundingBox[2] + 1));
-  tileEnd.y = std::min(tileEnd.y, (U32)std::abs(boundingBox[3] + 1));
+  tileOffset.x = std::max(tileOffset.x, static_cast<U32>(std::max(0.0f, boundingBox[0] - 1.0f)));
+  tileOffset.y = std::max(tileOffset.y, static_cast<U32>(std::max(0.0f, boundingBox[1] - 1.0f)));
+  tileEnd.x = std::min(tileEnd.x, static_cast<U32>(std::max(0.0f, boundingBox[2] + 1.0f)));
+  tileEnd.y = std::min(tileEnd.y, static_cast<U32>(std::max(0.0f, boundingBox[3] + 1.0f)));
 
   
   auto interpolator = payload.pipeline->m_CreateInfo.interpolator;

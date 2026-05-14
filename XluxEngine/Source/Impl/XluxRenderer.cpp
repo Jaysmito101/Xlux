@@ -285,10 +285,20 @@ Bool Renderer::PassTriangleToFragmentShader(ShaderTriangleRef triangle) {
     .framebuffer = m_ActiveFramebuffer,
   };
 
+  auto minX = static_cast<I32>(std::floor(boundingBox[0]));
+  auto minY = static_cast<I32>(std::floor(boundingBox[1]));
+  auto maxX = static_cast<I32>(std::ceil(boundingBox[2]));
+  auto maxY = static_cast<I32>(std::ceil(boundingBox[3]));
+
+  auto startX = static_cast<U32>(std::max(0, minX));
+  auto startY = static_cast<U32>(std::max(0, minY));
+  auto endX = static_cast<U32>(std::max(0, maxX));
+  auto endY = static_cast<U32>(std::max(0, maxY));
+
   auto tiles = m_ActiveFramebuffer->GetOverlappingTiles(
-      static_cast<I32>(boundingBox[0]), static_cast<I32>(boundingBox[1]),
-      static_cast<I32>(boundingBox[2] - boundingBox[0]),
-      static_cast<I32>(boundingBox[3] - boundingBox[1]));
+      startX, startY,
+      endX > startX ? endX - startX : 0,
+      endY > startY ? endY - startY : 0);
   for (auto tileId : tiles) {
     input.slotId = tileId;
     m_FragmentWorker->AddJob(input);
