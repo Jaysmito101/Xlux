@@ -61,28 +61,23 @@ class XLUX_API Renderer {
   std::optional<Viewport> m_ActiveViewport;
   void* m_RendererUserData = nullptr;
 
-  static constexpr U32 k_FragmentShaderWorkerCountX = 8;
-  static constexpr U32 k_FragmentShaderWorkerCountY = 6;
+  static constexpr U32 k_FragmentShaderWorkerCount = 16;
   static constexpr U32 k_VertexShaderWorkerCount = 8;
   
-  static constexpr U32 k_FrameClearWorkerCount = 16;
-
-  U32 m_FragmentShaderTileWidth = 0;
-  U32 m_FragmentShaderTileHeight = 0;
+  static constexpr U32 k_FrameClearWorkerCount = 4;
 
   using FragmentWorkerPoolType =
       WorkerPool<k_FrameClearWorkerCount, FrameClearWorkerInput, FrameClearWorker>;
+  using FragmentWorkerPoolType2 = WorkerPool<k_FragmentShaderWorkerCount,
+                                      FragmentShaderWorkerInput, FragmentShaderWorker>;
 
   Scope<FragmentWorkerPoolType> m_FragmentWorker = nullptr;
+  Scope<FragmentWorkerPoolType2> m_FragmentWorker2 = nullptr;
 
   RawPtr<ThreadPool<k_VertexShaderWorkerCount, VertexShaderWorkerInput, U32>>
       m_VertexShaderThreadPool;
   RawPtr<IJob<VertexShaderWorkerInput, U32>> m_VertexShaderJob;
 
-  RawPtr<ThreadPool<k_FragmentShaderWorkerCountX * k_FragmentShaderWorkerCountY,
-                    FragmentShaderWorkerInput, U32>>
-      m_FragmentShaderThreadPool;
-  RawPtr<IJob<FragmentShaderWorkerInput, U32>> m_FragmentShaderJob;
 
   RawPtr<LinearAllocator> m_VertexToFragmentDataAllocator;
 };

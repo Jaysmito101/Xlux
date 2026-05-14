@@ -17,11 +17,7 @@ Renderer::Renderer() {
     m_VertexShaderJob);
     
   m_FragmentWorker = CreateScope<FragmentWorkerPoolType>();
-        
-  m_FragmentShaderJob = CreateRawPtr<FragmentShaderWorker>();
-  m_FragmentShaderThreadPool = CreateRawPtr<
-      ThreadPool<k_FragmentShaderWorkerCountX * k_FragmentShaderWorkerCountY,
-                 FragmentShaderWorkerInput, U32>>(m_FragmentShaderJob);
+  m_FragmentWorker2 = CreateScope<FragmentWorkerPoolType2>(); 
 
   m_VertexToFragmentDataAllocator = CreateRawPtr<LinearAllocator>(
       1024 * 1024 * 256, k_VertexShaderWorkerCount);  // 256MB x 8 = 2GB
@@ -29,6 +25,7 @@ Renderer::Renderer() {
 
 Renderer::~Renderer() {
   m_FragmentWorker.reset();
+  m_FragmentWorker2.reset();
 
   delete m_VertexShaderThreadPool;
   delete m_VertexShaderJob;
@@ -74,8 +71,8 @@ void Renderer::Flush() {
   }
 #endif
   m_VertexShaderThreadPool->WaitJobDone();
-  m_FragmentShaderThreadPool->WaitJobDone();
   m_FragmentWorker->WaitForIdle();
+  m_FragmentWorker2->WaitForIdle();
   m_VertexToFragmentDataAllocator->Reset();
 }
 
@@ -88,11 +85,6 @@ void Renderer::BindFramebuffer(RawPtr<IFramebuffer> fbo) {
 #endif
 
   m_ActiveFramebuffer = fbo;
-
-  m_FragmentShaderTileWidth = static_cast<U32>(std::ceil(
-      static_cast<F32>(fbo->GetWidth()) / k_FragmentShaderWorkerCountX));
-  m_FragmentShaderTileHeight = static_cast<U32>(std::ceil(
-      static_cast<F32>(fbo->GetHeight()) / k_FragmentShaderWorkerCountY));
 }
 
 void Renderer::BindPipeline(RawPtr<Pipeline> pipeline) {
@@ -214,7 +206,7 @@ void Renderer::DrawIndexed(RawPtr<Buffer> vertexBuffer,
 
   if (!m_DetachedRendering) {
     m_VertexShaderThreadPool->WaitJobDone();
-    m_FragmentShaderThreadPool->WaitJobDone();
+    m_FragmentWorker2->WaitForIdle();
   }
 }
 
@@ -279,60 +271,29 @@ void Renderer::DrawIndexedOrdered(RawPtr<Buffer> vertexBuffer,
 
   if (!m_DetachedRendering) {
     m_VertexShaderThreadPool->WaitJobDone();
-    m_FragmentShaderThreadPool->WaitJobDone();
+    m_FragmentWorker2->WaitForIdle();
   }
 }
 
 Bool Renderer::PassTriangleToFragmentShader(ShaderTriangleRef triangle) {
   auto boundingBox = triangle.GetBoundingBox();  // (xmin, ymin, xmax, ymax)
-  // boundingBox *=
-  // math::Vec4(static_cast<F32>(m_ActiveFramebuffer->GetWidth()),
-  // static_cast<F32>(m_ActiveFramebuffer->GetHeight()),
-  // static_cast<F32>(m_ActiveFramebuffer->GetWidth()),
-  // static_cast<F32>(m_ActiveFramebuffer->GetHeight()));
 
-  auto fragmentShaderJob =
-      static_cast<RawPtr<FragmentShaderWorker>>(m_FragmentShaderJob);
+  FragmentShaderWorkerInput input = {
+    .triangle = triangle,
+    .slotId = 0,
+    .pipeline = m_ActivePipeline,
+    .framebuffer = m_ActiveFramebuffer,
+  };
 
-  fragmentShaderJob->SetFramebuffer(m_ActiveFramebuffer);
-  fragmentShaderJob->SetPipeline(m_ActivePipeline);
-
-  FragmentShaderWorkerInput input = {};
-  input.triangle = triangle;
-
-  for (U32 y = 0; y < k_FragmentShaderWorkerCountY; ++y) {
-    for (U32 x = 0; x < k_FragmentShaderWorkerCountX; ++x) {
-      input.startX = std::max(static_cast<I32>(x * m_FragmentShaderTileWidth),
-                              m_ActiveViewport.value().x);
-      input.startY = std::max(static_cast<I32>(y * m_FragmentShaderTileHeight),
-                              m_ActiveViewport.value().y);
-      input.width = static_cast<I32>(m_FragmentShaderTileWidth);
-      input.height = static_cast<I32>(m_FragmentShaderTileHeight);
-
-      if ((I32)input.width + (I32)input.startX >
-          m_ActiveViewport.value().x + m_ActiveViewport.value().width) {
-        input.width = m_ActiveViewport.value().x +
-                      m_ActiveViewport.value().width - input.startX;
-      }
-
-      if ((I32)input.height + (I32)input.startY >
-          m_ActiveViewport.value().y + m_ActiveViewport.value().height) {
-        input.height = m_ActiveViewport.value().y +
-                       m_ActiveViewport.value().height - input.startY;
-      }
-
-      if (boundingBox[0] >= input.startX + input.width ||
-          boundingBox[2] <= input.startX ||
-          boundingBox[1] >= input.startY + input.height ||
-          boundingBox[3] <= input.startY) {
-        continue;
-      }
-
-      m_FragmentShaderThreadPool->AddJobTo(
-          input, y * k_FragmentShaderWorkerCountX + x);
-    }
+  auto tiles = m_ActiveFramebuffer->GetOverlappingTiles(
+      static_cast<I32>(boundingBox[0]), static_cast<I32>(boundingBox[1]),
+      static_cast<I32>(boundingBox[2] - boundingBox[0]),
+      static_cast<I32>(boundingBox[3] - boundingBox[1]));
+  for (auto tileId : tiles) {
+    input.slotId = tileId;
+    m_FragmentWorker2->AddJob(input);
   }
-
+  
   return false;
 }
 

@@ -1,3 +1,4 @@
+#include "Core/Logger.hpp"
 #include "Impl/FragmentShaderWorker.hpp"
 #include "Impl/DeviceMemory.hpp"
 #include "Impl/Buffer.hpp"
@@ -51,29 +52,19 @@ math::Vec3 FragmentShaderWorker::CalculateBarycentric(const math::Vec2& p,
   return math::Vec3(w, v, u);
 }
 
-Bool FragmentShaderWorker::Execute(FragmentShaderWorkerInput payload,
-                                   U32& result, Size threadID) {
-  (void)result, (void)threadID;
+Bool FragmentShaderWorker::Execute(FragmentShaderWorkerInput payload, U32 threadID) {
+  (void)threadID;
 
   // payload.triangle.Log();
-
-  auto boundingBox = payload.triangle.GetBoundingBox();
-  // boundingBox *= math::Vec4(static_cast<F32>(m_Framebuffer->GetWidth()),
-  // static_cast<F32>(m_Framebuffer->GetHeight()),
-  // static_cast<F32>(m_Framebuffer->GetWidth()),
-  // static_cast<F32>(m_Framebuffer->GetHeight()));
-
-  const auto startX = std::max(
-      payload.startX, static_cast<U32>(std::max(boundingBox[0] - 1.0, 0.0)));
-  const auto startY = std::max(
-      payload.startY, static_cast<U32>(std::max(boundingBox[1] - 1.0, 0.0)));
-  const auto endX = std::min(payload.startX + payload.width,
-                             static_cast<U32>(boundingBox[2]) + 1);
-  const auto endY = std::min(payload.startY + payload.height,
-                             static_cast<U32>(boundingBox[3]) + 1);
-
-  auto interpolator = m_Pipeline->m_CreateInfo.interpolator;
-  auto framebuffer = m_Framebuffer;
+  
+  auto tileOffset = payload.framebuffer->GetTileOffset(payload.slotId);
+  auto tileSize = payload.framebuffer->GetTileSize();
+  auto tileEnd = MakePair(std::clamp(tileOffset.x + tileSize.x, 0U, (U32)payload.framebuffer->GetWidth()),
+  std::clamp(tileOffset.y + tileSize.y, 0U, (U32)payload.framebuffer->GetHeight()));
+  
+  
+  auto interpolator = payload.pipeline->m_CreateInfo.interpolator;
+  auto framebuffer = payload.framebuffer;
 
   FragmentShaderOutput fragmentShaderOutput = {};
   U8 fragmentInterpolatedInput[1024];
@@ -83,8 +74,8 @@ Bool FragmentShaderWorker::Execute(FragmentShaderWorkerInput payload,
   auto& p2 = payload.triangle.GetBuiltInRef(2)->Position;
   auto vertexData = payload.triangle.GetVertexData();
 
-  for (U32 y = startY; y < endY; ++y) {
-    for (U32 x = startX; x < endX; ++x) {
+  for (U32 y = tileOffset.y; y < tileEnd.y; ++y) {
+    for (U32 x = tileOffset.x; x < tileEnd.x; ++x) {
       auto p = math::Vec2((F32)x, (F32)y);
       // auto p = math::Vec2((F32)x / framebuffer->GetWidth(), (F32)y /
       // framebuffer->GetHeight());
@@ -103,14 +94,14 @@ Bool FragmentShaderWorker::Execute(FragmentShaderWorkerInput payload,
         fragmentShaderOutput.Depth = p0[2] * baycentric[0] +
                                      p1[2] * baycentric[1] +
                                      p2[2] * baycentric[2];
-        m_Pipeline->m_CreateInfo.fragmentShader->Execute(
+        payload.pipeline->m_CreateInfo.fragmentShader->Execute(
             fragmentInterpolatedInput, &fragmentShaderOutput);
 
         auto px = x, py = framebuffer->GetHeight() - 1 - y;
 
         if (BlendAndApplyDepth(px, py, framebuffer,
-                               fragmentShaderOutput.Depth)) {
-          BlendAndApplyColor(px, py, framebuffer, fragmentShaderOutput);
+                               payload.pipeline, fragmentShaderOutput.Depth)) {
+          BlendAndApplyColor(px, py, framebuffer, payload.pipeline, fragmentShaderOutput);
         }
       }
     }
@@ -121,8 +112,8 @@ Bool FragmentShaderWorker::Execute(FragmentShaderWorkerInput payload,
 
 Bool FragmentShaderWorker::BlendAndApplyDepth(U32 px, U32 py,
                                               RawPtr<IFramebuffer> framebuffer,
-                                              F32 depth) {
-  if (!m_Pipeline->m_CreateInfo.depthTestEnable) return true;
+                                              RawPtr<Pipeline> pipeline, F32 depth) {
+  if (!pipeline->m_CreateInfo.depthTestEnable) return true;
   if (!framebuffer->HasDepthAttachment()) return true;
 
   F32 currentDepth = 0.0f;
@@ -130,7 +121,7 @@ Bool FragmentShaderWorker::BlendAndApplyDepth(U32 px, U32 py,
 
   Bool testResult = false;
 
-  switch (m_Pipeline->m_CreateInfo.depthCompareFunction) {
+  switch (pipeline->m_CreateInfo.depthCompareFunction) {
     case CompareFunction_Never: {
       testResult = false;
       break;
@@ -184,6 +175,7 @@ Bool FragmentShaderWorker::BlendAndApplyDepth(U32 px, U32 py,
 
 void FragmentShaderWorker::BlendAndApplyColor(
     U32 px, U32 py, RawPtr<IFramebuffer> framebuffer,
+    RawPtr<Pipeline> pipeline,
     const FragmentShaderOutput& output) {
   math::Vec4 dstColor = {1.0f, 1.0f, 1.0f, 1.0f};
   math::Vec4 blendedColor = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -192,15 +184,15 @@ void FragmentShaderWorker::BlendAndApplyColor(
        ++i) {
     auto srcColor = output.Color[i];
 
-    if (m_Pipeline->m_CreateInfo.blendEnable) {
+    if (pipeline->m_CreateInfo.blendEnable) {
       framebuffer->GetColorPixel(i, px, py, dstColor[0], dstColor[1],
                                  dstColor[2], dstColor[3]);
 
-      auto blendEquation = m_Pipeline->m_CreateInfo.blendEquation;
-      auto srcBelndFunc = m_Pipeline->m_CreateInfo.srcBlendFunction;
-      auto dstBlendFunc = m_Pipeline->m_CreateInfo.dstBlendFunction;
-      auto srcAlphaBlendFunc = m_Pipeline->m_CreateInfo.srcBlendFunctionAlpha;
-      auto dstAlphaBlendFunc = m_Pipeline->m_CreateInfo.dstBlendFunctionAlpha;
+      auto blendEquation = pipeline->m_CreateInfo.blendEquation;
+      auto srcBelndFunc = pipeline->m_CreateInfo.srcBlendFunction;
+      auto dstBlendFunc = pipeline->m_CreateInfo.dstBlendFunction;
+      auto srcAlphaBlendFunc = pipeline->m_CreateInfo.srcBlendFunctionAlpha;
+      auto dstAlphaBlendFunc = pipeline->m_CreateInfo.dstBlendFunctionAlpha;
       F32 srcBlendFactor =
           CalculateBlendFactor(srcColor[3], dstColor[3], srcBelndFunc);
       F32 dstBlendFactor =

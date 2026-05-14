@@ -9,40 +9,24 @@ namespace xlux {
 
 struct FragmentShaderWorkerInput {
   ShaderTriangleRef triangle;
-  U32 startX = 0;
-  U32 startY = 0;
-  U32 width = 0;
-  U32 height = 0;
-
-  FragmentShaderWorkerInput() {}
+  U32 slotId = 0;
+  RawPtr<Pipeline> pipeline = nullptr;
+  RawPtr<IFramebuffer> framebuffer = nullptr;
 };
 
-class FragmentShaderWorker : public IJob<FragmentShaderWorkerInput, U32> {
+class FragmentShaderWorker {
  public:
-  FragmentShaderWorker() = default;
-  ~FragmentShaderWorker() = default;
-
-  Bool Execute(FragmentShaderWorkerInput payload, U32& result,
-               Size threadID) override;
-
-  inline void SetPipeline(RawPtr<Pipeline> pipeline) { m_Pipeline = pipeline; }
-  inline void SetFramebuffer(RawPtr<IFramebuffer> framebuffer) {
-    m_Framebuffer = framebuffer;
-  }
+  Bool Execute(FragmentShaderWorkerInput payload, U32 threadID);
 
  private:
   Bool PointInTriangle(const math::Vec2& p, const math::Vec4& p0,
                        const math::Vec4& p1, const math::Vec4& p2);
   math::Vec3 CalculateBarycentric(const math::Vec2& p, const math::Vec4& a,
                                   const math::Vec4& b, const math::Vec4& c);
-  Bool BlendAndApplyDepth(U32 px, U32 py, RawPtr<IFramebuffer> fbo, F32 depth);
-  void BlendAndApplyColor(U32 px, U32 py, RawPtr<IFramebuffer> fbo,
+  Bool BlendAndApplyDepth(U32 px, U32 py, RawPtr<IFramebuffer> fbo, RawPtr<Pipeline> pipeline, F32 depth);
+  void BlendAndApplyColor(U32 px, U32 py, RawPtr<IFramebuffer> fbo, RawPtr<Pipeline> pipeline,
                           const FragmentShaderOutput& output);
   F32 CalculateBlendFactor(F32 srcAlpha, F32 dstAlpha,
                            EBlendFunction blendFunction);
-
- private:
-  RawPtr<Pipeline> m_Pipeline = nullptr;
-  RawPtr<IFramebuffer> m_Framebuffer = nullptr;
 };
 }  // namespace xlux
