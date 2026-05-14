@@ -11,6 +11,10 @@ namespace xlux {
     template <typename T>
     class WorkerQueue {
     public:
+        WorkerQueue() = default;
+        WorkerQueue(WorkerQueue<T>&) = delete;
+        WorkerQueue(WorkerQueue<T>&&) = delete;
+
         void Push(const T& item) {
             std::unique_lock lock(m_Mutex);
             m_Queue.push(item);
